@@ -212,11 +212,12 @@ class DeployLambda:
         policy_arn = self.create_IAM_Policy(table_name)
         role_arn = self.create_role(policy_arn)
         lambda_arn = self.create_lambda(role_arn)
+	print('creating entry api')
         entry_id = self.create_rest_api(lambda_arn=lambda_arn, api_name='entryTest', operation='entry',
                                         statement_id='entry-invoke1')
         print('entry url:')
         print(f'https://{entry_id}.execute-api.{self.region}.amazonaws.com/entry/entry')
-
+	print('creating exit api')
         exit_id = self.create_rest_api(lambda_arn=lambda_arn, api_name='exitTest', operation='exit',
                                        statement_id='exit-invoke1')
         print('\nexit url:')
