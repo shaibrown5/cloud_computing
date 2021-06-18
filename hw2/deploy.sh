@@ -27,7 +27,7 @@ echo $SUB_ID_3
 echo $VPC_ID
 echo $VPC_CIDR_BLOCK
 
-echo "createing stack shai-elad stack"
+echo "createing stack shai-elad stack now"
 STACK_RES=$(aws cloudformation create-stack --stack-name shai-elad-stack --template-body file://ec2CloudFormation.yml \
 	--parameters ParameterKey=InstanceType,ParameterValue=t2.micro \
 	ParameterKey=KeyName,ParameterValue=$KEY_NAME \
