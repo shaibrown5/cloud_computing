@@ -1,0 +1,238 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: Template that creates 3 ec2 instances, 2 sec groups for elb and ec2. it outputs relevant information needed for the rest of the deploy
+
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+
+  InstanceType:
+    Description: WebServer EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues: [t2.micro]
+    ConstraintDescription: must be a valid EC2 instance type.
+
+  SSHLocation:
+    Description: The IP address range that can be used to SSH to the EC2 instances
+    Type: String
+    MinLength: 9
+    MaxLength: 18
+    Default: 0.0.0.0/0
+    AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+
+  LatestAmiId:
+    Type:  'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+
+  SubNetId1:
+    Description: the id of the first SubNet
+    Type: String
+
+  SubNetId2:
+    Description: the id of the second SubNet
+    Type: String
+
+  SubNetId3:
+    Description: the id of the second SubNet
+    Type: String
+
+  VPCId:
+    Description: the id of the vpc
+    Type: String
+
+  VPCcidr:
+    Description: the cidr of the vpc
+    Type: String
+
+Resources:
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH access via port 22 and http access
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 8080
+        ToPort: 8080
+        CidrIp: !Ref 'VPCcidr'
+
+  EC2Instance1:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      SecurityGroupIds: 
+        - !Ref InstanceSecurityGroup
+      KeyName: !Ref KeyName
+      ImageId: !Ref LatestAmiId
+      UserData:
+        Fn::Base64: !Sub
+        - |
+          #!/bin/bash
+          exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+          # Sleep for the instance role might not be properly attached
+          sleep 10
+          sudo apt-get update
+          sudo apt-get install python3-pip -y
+          sudo apt-get install python3-flask -y
+          sudo apt-get install redis-server -y
+          sudo service redis-server start
+          pip3 install redis
+          git clone https://github.com/shaibrown5/cloud_computing.git
+          cd cloud_computing
+          pip3 install -r requirements.txt
+          cd hw2 
+          python3 app.py
+        - {
+          }  
+
+  EC2Instance2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      SecurityGroupIds: 
+        - !Ref InstanceSecurityGroup
+      KeyName: !Ref KeyName
+      ImageId: !Ref LatestAmiId
+      UserData:
+        Fn::Base64: !Sub
+        - |
+          #!/bin/bash
+          exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+          # Sleep for the instance role might not be properly attached
+          sleep 10
+          sudo apt-get update
+          sudo apt-get install python3-pip -y
+          sudo apt-get install python3-flask -y
+          sudo apt-get install redis-server -y
+          sudo service redis-server start
+          pip3 install redis
+          git clone https://github.com/shaibrown5/cloud_computing.git
+          cd cloud_computing
+          pip3 install -r requirements.txt
+          cd hw2 
+          python3 app.py
+        - {
+          }
+
+  EC2Instance3:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      SecurityGroupIds: 
+        - !Ref InstanceSecurityGroup
+      KeyName: !Ref KeyName
+      ImageId: !Ref LatestAmiId
+      UserData:
+        Fn::Base64: !Sub
+        - |
+          #!/bin/bash
+          exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+          # Sleep for the instance role might not be properly attached
+          sleep 10
+          sudo apt-get update
+          sudo apt-get install python3-pip -y
+          sudo apt-get install python3-flask -y
+          sudo apt-get install redis-server -y
+          sudo service redis-server start
+          pip3 install redis
+        - {
+          }
+
+  ELBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH access via port 22 and http access port 80
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: !Ref 'SSHLocation'
+
+  ElasticLoadBalancer: 
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties: 
+      Name: ShaiEladELB
+      IpAddressType: ipv4
+      Scheme: internet-facing
+      SecurityGroups: 
+        - !GetAtt ELBSecurityGroup.GroupId
+      Subnets:
+        - Ref: SubNetId1
+        - Ref: SubNetId2
+        - Ref: SubNetId3
+      Type: application
+
+  ELBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties: 
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: /health-check
+      HealthCheckPort: 8080
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      Matcher: 
+        HttpCode: 200,302
+      Name: ShaiEladTargetGroup
+      Port: 80
+      Protocol: HTTP
+      Targets: 
+        - Id: !Ref EC2Instance1
+          Port: 8080
+        - Id: !Ref EC2Instance2
+          Port: 8080
+        - Id: !Ref EC2Instance3
+          Port: 8080
+      TargetType: instance
+      UnhealthyThresholdCount: 2
+      VpcId: !Ref VPCId
+
+  ELBistener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties: 
+      DefaultActions: 
+        - Type: forward
+          TargetGroupArn: !Ref ELBTargetGroup
+          Order: 100
+      LoadBalancerArn: !Ref ElasticLoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+Outputs:
+  InstanceId1:
+    Description: InstanceId of the first created EC2 instance
+    Value: !Ref 'EC2Instance1'
+  Instance1IP:
+    Description: Public IP address of the first created EC2 instance
+    Value: !GetAtt [EC2Instance1, PublicIp]
+  InstanceId2:
+    Description: InstanceId of the second created EC2 instance
+    Value: !Ref 'EC2Instance2'
+  Instance2IP:
+    Description: Public IP address of the second created EC2 instance
+    Value: !GetAtt [EC2Instance2, PublicIp]
+  InstanceId3:
+    Description: InstanceId of the third created EC2 instance
+    Value: !Ref 'EC2Instance3'
+  Instance3IP:
+    Description: Public IP address of the third created EC2 instance
+    Value: !GetAtt [EC2Instance3, PublicIp]
+  TargetGroup:
+    Description: the target group of the instances
+    Value: !Ref 'ELBTargetGroup'
+  LoadBalancer:
+    Description: Application Load Balancer
+    Value: !Ref 'ElasticLoadBalancer'
