@@ -5,37 +5,34 @@ from datetime import datetime
 from flask import Flask, request
 import requests
 import boto3
-import threading
-import socket
 
 # dynamodb = boto3.resource('dynamodb')
 # table = dynamodb.Table('live_nodes')
 # cache = redis.Redis(host='localhost', port=6379, db=0)
+
+elb = boto3.client('elbv2', region_name='us-east-2')
+ec2 = boto3.client('ec2', region_name='us-east-2')
 cache = {}
 app = Flask(__name__)
 
 
-def signal_alive():
-    threading.Timer(10.0, signal_alive).start()
-    ip = socket.gethostbyname(socket.gethostname())
-    timestamp = str(datetime.now())
-    print(timestamp)
-    # item = {'ip': ip,
-    #         'last_timestamp': timestamp
-    #         }
-    # table.put_item(Item=item)
-
-
-signal_alive()
-
-
 def get_live_node_list():
-    # response = table.scan()
-    # return (x['ip'] for x in response['items'])
-    return ['127.0.0.1']
+    target_group = elb.describe_target_groups(
+        Names=[PREFIX + "-tg"],
+    )
+    target_group_arn = target_group["TargetGroups"][0]["TargetGroupArn"]
+    health = elb.describe_target_health(TargetGroupArn=target_group_arn)
+    healthy = []
+    for target in health["TargetHealthDescriptions"]:
+        if target["TargetHealth"]["State"] != "unhealthy":
+            healthy.append(target["Target"]["Id"])
 
-    # For testing, put IPs of nodes here, Do it in the same order for all nodes
+    healthy_ips = []
+    for node_id in healthy:
+        healthy_ips.append(
+            ec2.describe_instances(InstanceIds=[node_id])["Reservations"][0]["Instances"][0]["PublicIpAddress"])
 
+    return healthy_ips
 
 
 #  Put item in nodes
@@ -103,6 +100,24 @@ def get_val():
     response = json.dumps({'status code': 200,
                            'item': item[0]})
     return response
+
+
+@app.route('/health-check', methods=['GET', 'POST'])
+def health_check():
+    return "ah ah ah ah staying alive"
+
+# def signal_alive():
+#     threading.Timer(10.0, signal_alive).start()
+#     ip = socket.gethostbyname(socket.gethostname())
+#     timestamp = str(datetime.now())
+#     print(timestamp)
+#     # item = {'ip': ip,
+#     #         'last_timestamp': timestamp
+#     #         }
+#     # table.put_item(Item=item)
+#
+#
+# signal_alive()
 
 
 if __name__ == '__main__':

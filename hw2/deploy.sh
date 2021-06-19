@@ -70,3 +70,22 @@ scp -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=60" app.py 
 # target health check command
 aws elbv2 describe-target-health  --target-group-arn $TGARN
 
+ssh -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=10" ubuntu@$Instance1IP <<EOF
+    # run app
+    nohup flask run --host 0.0.0.0  &>/dev/null &
+    exit
+EOF
+
+ssh -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=10" ubuntu@$Instance2IP <<EOF
+    # run app
+    nohup flask run --host 0.0.0.0  &>/dev/null &
+    exit
+EOF
+
+ssh -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=10" ubuntu@$Instance3IP <<EOF
+    # run app
+    nohup flask run --host 0.0.0.0  &>/dev/null &
+    exit
+EOF
+
+
