@@ -58,6 +58,19 @@ def put():
     return ans.json()
 
 
+@app.route('put-test', methods=['GET', 'POST'])
+def put_test():
+    key = request.args.get('str_key')
+    data = request.args.get('data')
+    exp_date = request.args.get('exp_date')
+
+    cache[key] = (data, expiration_date)
+    print(cache)
+    
+    return json.dumps({'status code': 200,
+                       'item': cache[key]})
+
+
 @app.route('/set_val', methods=['GET', 'POST'])
 def set_val():
     key = request.args.get('str_key')

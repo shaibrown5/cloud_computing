@@ -65,14 +65,9 @@ scp -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=60" app.py 
 scp -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=60" app.py ubuntu@$Instance2IP:/home/ubuntu/
 scp -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=60" app.py ubuntu@$Instance3IP:/home/ubuntu/
 
-
-
-# target health check command
-aws elbv2 describe-target-health  --target-group-arn $TGARN
-
 ssh -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=10" ubuntu@$Instance1IP <<EOF
     # run app
-    nohup flask run --host 0.0.0.0  &>/dev/null &
+    python3 app.py &
     exit
 EOF
 
@@ -84,8 +79,16 @@ EOF
 
 ssh -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=10" ubuntu@$Instance3IP <<EOF
     # run app
-    nohup flask run --host 0.0.0.0  &>/dev/null &
+     flask run --host 0.0.0.0  &>/dev/null &
     exit
 EOF
+
+
+# target health check command
+aws elbv2 describe-target-health  --target-group-arn $TGARN
+
+DNS_ADD=$(aws elbv2 describe-load-balancers --names ShaiEladELB | jq -r .LoadBalancers[0].DNSName)
+
+
 
 
