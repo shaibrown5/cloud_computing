@@ -57,8 +57,16 @@ Instance2IP=$(aws cloudformation --region $REGION describe-stacks --stack-name s
 Instance3IP=$(aws cloudformation --region $REGION describe-stacks --stack-name shai-elad-stack --query "Stacks[0].Outputs[?OutputKey=='Instance3IP'].OutputValue" --output text)
 TGARN=$(aws cloudformation --region $REGION describe-stacks --stack-name shai-elad-stack --query "Stacks[0].Outputs[?OutputKey=='TargetGroup'].OutputValue" --output text)
 
+# put ther server file on the instances.
+# the other option for this was to create an s3 bucket, and then have the ec2 read and save the app.py from there during the
+# cloudformation start up under UserData.
+# this is better in our case
+scp -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=60" app.py ubuntu@$Instance1IP:/home/ubuntu/
+scp -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=60" app.py ubuntu@$Instance2IP:/home/ubuntu/
+scp -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=60" app.py ubuntu@$Instance3IP:/home/ubuntu/
 
-scp -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=60" app.py ec2-user@Instance1IP:/home/ubuntu/
+
+
 # target health check command
 aws elbv2 describe-target-health  --target-group-arn $TGARN
 

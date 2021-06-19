@@ -73,25 +73,17 @@ Resources:
       KeyName: !Ref KeyName
       ImageId: !Ref LatestAmiId
       UserData:
-        Fn::Base64: !Sub
-        - |
-          #!/bin/bash
-          exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
-          # Sleep for the instance role might not be properly attached
-          sleep 10
-          sudo apt-get update
-          sudo apt-get install python3-pip -y
-          sudo apt-get install python3-flask -y
-          sudo apt-get install redis-server -y
-          sudo service redis-server start
-          pip3 install redis
-          git clone https://github.com/shaibrown5/cloud_computing.git
-          cd cloud_computing
-          pip3 install -r requirements.txt
-          cd hw2 
-          python3 app.py
-        - {
-          }  
+        Fn::Base64: 
+          !Sub |
+            #!/bin/bash
+            sleep 20
+            sudo apt-get update
+            sudo apt-get install python3-pip -y
+            sudo apt-get install python3-flask -y
+            sudo apt-get install redis-server -y
+            sudo service redis-server start
+            pip3 install redis
+
 
   EC2Instance2:
     Type: AWS::EC2::Instance
@@ -102,25 +94,16 @@ Resources:
       KeyName: !Ref KeyName
       ImageId: !Ref LatestAmiId
       UserData:
-        Fn::Base64: !Sub
-        - |
-          #!/bin/bash
-          exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
-          # Sleep for the instance role might not be properly attached
-          sleep 10
-          sudo apt-get update
-          sudo apt-get install python3-pip -y
-          sudo apt-get install python3-flask -y
-          sudo apt-get install redis-server -y
-          sudo service redis-server start
-          pip3 install redis
-          git clone https://github.com/shaibrown5/cloud_computing.git
-          cd cloud_computing
-          pip3 install -r requirements.txt
-          cd hw2 
-          python3 app.py
-        - {
-          }
+        Fn::Base64: 
+          !Sub |
+            #!/bin/bash
+            sleep 20
+            sudo apt-get update
+            sudo apt-get install python3-pip -y
+            sudo apt-get install python3-flask -y
+            sudo apt-get install redis-server -y
+            sudo service redis-server start
+            pip3 install redis
 
   EC2Instance3:
     Type: AWS::EC2::Instance
@@ -131,20 +114,16 @@ Resources:
       KeyName: !Ref KeyName
       ImageId: !Ref LatestAmiId
       UserData:
-        Fn::Base64: !Sub
-        - |
-          #!/bin/bash
-          exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
-          # Sleep for the instance role might not be properly attached
-          sleep 10
-          sudo apt-get update
-          sudo apt-get install python3-pip -y
-          sudo apt-get install python3-flask -y
-          sudo apt-get install redis-server -y
-          sudo service redis-server start
-          pip3 install redis
-        - {
-          }
+        Fn::Base64: 
+          !Sub |
+            #!/bin/bash      
+            sleep 20
+            sudo apt-get update
+            sudo apt-get install python3-pip -y
+            sudo apt-get install python3-flask -y
+            sudo apt-get install redis-server -y
+            sudo service redis-server start
+            pip3 install redis
 
   ELBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
