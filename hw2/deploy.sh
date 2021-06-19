@@ -61,33 +61,15 @@ TGARN=$(aws cloudformation --region $REGION describe-stacks --stack-name shai-el
 # the other option for this was to create an s3 bucket, and then have the ec2 read and save the app.py from there during the
 # cloudformation start up under UserData.
 # this is better in our case
-scp -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=60" app.py ubuntu@$Instance1IP:/home/ubuntu/
-scp -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=60" app.py ubuntu@$Instance2IP:/home/ubuntu/
-scp -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=60" app.py ubuntu@$Instance3IP:/home/ubuntu/
 
-ssh -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=10" ubuntu@$Instance1IP <<EOF
-    # run app
-    python3 app.py &
-    exit
-EOF
-
-ssh -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=10" ubuntu@$Instance2IP <<EOF
-    # run app
-    nohup flask run --host 0.0.0.0  &>/dev/null &
-    exit
-EOF
-
-ssh -i $KEY_PEM -o "StrictHostKeyChecking=no" -o "ConnectionAttempts=10" ubuntu@$Instance3IP <<EOF
-    # run app
-     flask run --host 0.0.0.0  &>/dev/null &
-    exit
-EOF
 
 
 # target health check command
 aws elbv2 describe-target-health  --target-group-arn $TGARN
 
 DNS_ADD=$(aws elbv2 describe-load-balancers --names ShaiEladELB | jq -r .LoadBalancers[0].DNSName)
+echo $DNS_ADD
+echo "aws elbv2 describe-target-health  --target-group-arn $TGARN"
 
 
 

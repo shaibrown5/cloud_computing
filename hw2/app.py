@@ -17,9 +17,7 @@ app = Flask(__name__)
 
 
 def get_live_node_list():
-    target_group = elb.describe_target_groups(
-        Names=[PREFIX + "-tg"],
-    )
+    target_group = elb.describe_target_groups(Names=["ShaiEladTargetGroup"])
     target_group_arn = target_group["TargetGroups"][0]["TargetGroupArn"]
     health = elb.describe_target_health(TargetGroupArn=target_group_arn)
     healthy = []
