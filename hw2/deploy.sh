@@ -2,8 +2,7 @@ KEY_NAME="shai-elad-key-`date +'%N'`"
 KEY_PEM="$KEY_NAME.pem"
 
 echo "create key pair $KEY_PEM to connect to instances and save locally"
-aws ec2 create-key-pair --key-name $KEY_NAME \
-    | jq -r ".KeyMaterial" > $KEY_PEM
+aws ec2 create-key-pair --key-name $KEY_NAME | jq -r ".KeyMaterial" > $KEY_PEM
 
 # secure the key pair
 chmod 400 $KEY_PEM
