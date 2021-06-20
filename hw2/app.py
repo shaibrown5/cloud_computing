@@ -19,7 +19,7 @@ app = Flask(__name__)
 @app.route('/nodes', methods=['GET', 'POST'])
 def get_live_node_list_test():
     try:
-        target_group = elb.describe_target_groups(Names=["ShaiEladTargetGroup-tg"])
+        target_group = elb.describe_target_groups()
     except:
         return target_group
     try:
