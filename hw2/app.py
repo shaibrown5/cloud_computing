@@ -15,7 +15,25 @@ ec2 = boto3.client('ec2', region_name='us-east-2')
 cache = {}
 app = Flask(__name__)
 
+
 @app.route('/nodes', methods=['GET', 'POST'])
+def get_live_node_list_test():
+    target_group = elb.describe_target_groups(Names=["ShaiEladTargetGroup"])
+    target_group_arn = target_group["TargetGroups"][0]["TargetGroupArn"]
+    health = elb.describe_target_health(TargetGroupArn=target_group_arn)
+    healthy = []
+    for target in health["TargetHealthDescriptions"]:
+        if target["TargetHealth"]["State"] != "unhealthy":
+            healthy.append(target["Target"]["Id"])
+
+    healthy_ips = []
+    for node_id in healthy:
+        healthy_ips.append(
+            ec2.describe_instances(InstanceIds=[node_id])["Reservations"][0]["Instances"][0]["PublicIpAddress"])
+
+    return json.dumps({'nodes': healthy_ips})
+
+
 def get_live_node_list():
     target_group = elb.describe_target_groups(Names=["ShaiEladTargetGroup"])
     target_group_arn = target_group["TargetGroups"][0]["TargetGroupArn"]
@@ -49,7 +67,8 @@ def put():
 
     try:
         ans = requests.post(f'http://{node}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}')
-        ans = requests.post(f'http://{alt_node}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}')
+        ans = requests.post(
+            f'http://{alt_node}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}')
     except requests.exceptions.ConnectionError:
         ans = json.dumps({'status_code': 404})
 
@@ -116,6 +135,7 @@ def get_val():
 @app.route('/health-check', methods=['GET', 'POST'])
 def health_check():
     return "ah ah ah ah staying alive"
+
 
 # def signal_alive():
 #     threading.Timer(10.0, signal_alive).start()
