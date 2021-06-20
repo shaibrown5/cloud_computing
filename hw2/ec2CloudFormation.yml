@@ -50,6 +50,69 @@ Parameters:
 
 Resources:
 
+  aliveNodes:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: aliveNodes
+      AttributeDefinitions:
+        - AttributeName: "ip"
+          AttributeType: "S"
+        - AttributeName: "lastAlive"
+          AttributeType: "N"
+      KeySchema:
+        - AttributeName: "ip"
+          KeyType: "HASH"
+      ProvisionedThroughput:
+        ReadCapacityUnits: "5"
+        WriteCapacityUnits: "5"
+      GlobalSecondaryIndexes:
+        - IndexName: gsiCaseCountTable
+          KeySchema:
+            - AttributeName: lastAlive
+              KeyType: HASH
+          Projection:
+            ProjectionType: "ALL"
+          ProvisionedThroughput:
+            ReadCapacityUnits: "5"
+            WriteCapacityUnits: "5"
+    DependsOn:
+      - DynamoDBQueryPolicy
+
+  DynamoDBQueryPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: DynamoDBQueryPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: "dynamodb:*"
+            Resource: "*"
+      Roles:
+        - Ref: "TableRole"
+
+  TableRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "dynamodb.amazonaws.com"
+                - "ec2.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+
+  MyInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: "/"
+      Roles:
+        - Ref: "TableRole"
+
   ELBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
