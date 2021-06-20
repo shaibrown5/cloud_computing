@@ -15,8 +15,8 @@ last = 0
 ip_address = ""
 
 
-elb = boto3.client('elbv2', region_name='us-east-2')
-ec2 = boto3.client('ec2', region_name='us-east-2')
+# elb = boto3.client('elbv2', region_name='us-east-2')
+# ec2 = boto3.client('ec2', region_name='us-east-2')
 cache = {}
 app = Flask(__name__)
 
