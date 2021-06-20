@@ -18,19 +18,30 @@ app = Flask(__name__)
 
 @app.route('/nodes', methods=['GET', 'POST'])
 def get_live_node_list_test():
-    target_group = elb.describe_target_groups(Names=["ShaiEladTargetGroup"])
-    target_group_arn = target_group["TargetGroups"][0]["TargetGroupArn"]
-    health = elb.describe_target_health(TargetGroupArn=target_group_arn)
+    try:
+        target_group = elb.describe_target_groups(Names=["ShaiEladTargetGroup"])
+    except:
+        return "falied 1"
+    try:
+        target_group_arn = target_group["TargetGroups"][0]["TargetGroupArn"]
+    except:
+        return "falied 2"
+    try:
+        health = elb.describe_target_health(TargetGroupArn=target_group_arn)
+    except:
+        return "falied 3"
     healthy = []
-    for target in health["TargetHealthDescriptions"]:
-        if target["TargetHealth"]["State"] != "unhealthy":
-            healthy.append(target["Target"]["Id"])
+    try:
+        for target in health["TargetHealthDescriptions"]:
+            if target["TargetHealth"]["State"] != "unhealthy":
+                healthy.append(target["Target"]["Id"])
 
-    healthy_ips = []
-    for node_id in healthy:
-        healthy_ips.append(
-            ec2.describe_instances(InstanceIds=[node_id])["Reservations"][0]["Instances"][0]["PublicIpAddress"])
-
+        healthy_ips = []
+        for node_id in healthy:
+            healthy_ips.append(
+                ec2.describe_instances(InstanceIds=[node_id])["Reservations"][0]["Instances"][0]["PublicIpAddress"])
+    except:
+        return "falied 4"
     return json.dumps({'nodes': healthy_ips})
 
 
