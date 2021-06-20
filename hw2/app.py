@@ -21,15 +21,15 @@ def get_live_node_list_test():
     try:
         target_group = elb.describe_target_groups(Names=["ShaiEladTargetGroup"])
     except:
-        return "falied 1"
+        return target_group
     try:
         target_group_arn = target_group["TargetGroups"][0]["TargetGroupArn"]
     except:
-        return "falied 2"
+        return target_group_arn
     try:
         health = elb.describe_target_health(TargetGroupArn=target_group_arn)
     except:
-        return "falied 3"
+        return health
     healthy = []
     try:
         for target in health["TargetHealthDescriptions"]:

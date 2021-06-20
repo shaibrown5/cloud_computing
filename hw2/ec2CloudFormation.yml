@@ -83,8 +83,8 @@ Resources:
         FromPort: 80
         ToPort: 80
         CidrIp: 0.0.0.0/0
-        SourceSecurityGroupId:
-          Ref: ELBSecurityGroup
+#        SourceSecurityGroupId:
+#          Ref: ELBSecurityGroup
 
   EC2Instance1:
     Type: AWS::EC2::Instance
