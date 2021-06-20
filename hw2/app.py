@@ -15,7 +15,7 @@ ec2 = boto3.client('ec2', region_name='us-east-2')
 cache = {}
 app = Flask(__name__)
 
-
+@app.route('/nodes', methods=['GET', 'POST'])
 def get_live_node_list():
     target_group = elb.describe_target_groups(Names=["ShaiEladTargetGroup"])
     target_group_arn = target_group["TargetGroups"][0]["TargetGroupArn"]
