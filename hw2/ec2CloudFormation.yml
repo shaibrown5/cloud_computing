@@ -78,7 +78,7 @@ Resources:
       - IpProtocol: tcp
         FromPort: 8080
         ToPort: 8080
-        CidrIp: '0.0.0.0/0'
+        CidrIp:  '0.0.0.0/0'
       - IpProtocol: tcp
         FromPort: 80
         ToPort: 80
@@ -106,6 +106,7 @@ Resources:
             pip3 install redis
             git clone https://github.com/shaibrown5/cloud_computing.git
             cd cloud_computing
+            git checkout _hotfix/less_strict_security
             pip3 install -r requirements.txt
             cd hw2
             python3 app.py
@@ -132,6 +133,7 @@ Resources:
             pip3 install redis
             git clone https://github.com/shaibrown5/cloud_computing.git
             cd cloud_computing
+            git checkout _hotfix/less_strict_security
             pip3 install -r requirements.txt
             cd hw2
             python3 app.py
@@ -158,6 +160,7 @@ Resources:
             pip3 install redis
             git clone https://github.com/shaibrown5/cloud_computing.git
             cd cloud_computing
+            git checkout _hotfix/less_strict_security
             pip3 install -r requirements.txt
             cd hw2
             python3 app.py
