@@ -14,6 +14,7 @@ delay_period = 30 * 1000
 last = 0
 ip_address = ""
 
+
 elb = boto3.client('elbv2', region_name='us-east-2')
 ec2 = boto3.client('ec2', region_name='us-east-2')
 cache = {}
@@ -22,7 +23,7 @@ app = Flask(__name__)
 
 @app.route('/health-check', methods=['GET', 'POST'])
 def health_check():
-    timestamp = get_milis(datetime.now())
+    timestamp = get_millis(datetime.now())
     item = {'ip': ip_address,
             'lastAlive': timestamp
             }
@@ -30,14 +31,14 @@ def health_check():
     return f'it is I {ip_address} - at time {timestamp} im still alive'
 
 
-def get_milis(dt):
+def get_millis(dt):
     return (int(round(dt.timestamp() * 1000)))
 
 
 def get_live_node_list():
     try:
         app.logger.info('get_live_node_list')
-        now = get_milis(datetime.now())
+        now = get_millis(datetime.now())
         response = table.scan()
         app.logger.info(f'get_live_node_list-  response: {response}')
         nodes = []
@@ -46,7 +47,7 @@ def get_live_node_list():
                 nodes.append(x['ip'])
         return nodes
     except Exception as e:
-        app.logger.info(f'error in get_live_node_list {e}')
+        # app.logger.info(f'error in get_live_node_list {e}')
         return "failed in the get_live_node_list"
 
 
@@ -177,9 +178,9 @@ def get_val():
     return response
 
 
-@app.route('/health-check', methods=['GET', 'POST'])
-def health_check():
-    return "ah ah ah ah staying alive"
+# @app.route('/health-check', methods=['GET', 'POST'])
+# def health_check():
+#     return "ah ah ah ah staying alive"
 
 
 # def signal_alive():
