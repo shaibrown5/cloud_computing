@@ -7,7 +7,6 @@ import requests
 import boto3
 import time
 
-
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('aliveNodes')
 # cache = redis.Redis(host='localhost', port=6379, db=0)
@@ -20,17 +19,20 @@ ec2 = boto3.client('ec2', region_name='us-east-2')
 cache = {}
 app = Flask(__name__)
 
+
 @app.route('/health-check', methods=['GET', 'POST'])
 def health_check():
     timestamp = get_milis(datetime.now())
     item = {'ip': ip_address,
-        'lastAlive': timestamp
-        }
+            'lastAlive': timestamp
+            }
     table.put_item(Item=item)
     return f'it is I {ip_address} - at time {timestamp} im still alive'
 
+
 def get_milis(dt):
     return (int(round(dt.timestamp() * 1000)))
+
 
 def get_live_node_list():
     try:
@@ -44,8 +46,8 @@ def get_live_node_list():
                 nodes.append(x['ip'])
         return nodes
     except Exception as e:
-            app.logger.info(f'error in get_live_node_list {e}')
-            return "failed in the get_live_node_list"
+        app.logger.info(f'error in get_live_node_list {e}')
+        return "failed in the get_live_node_list"
 
 
 # @app.route('/nodes', methods=['GET', 'POST'])
@@ -195,4 +197,6 @@ def health_check():
 
 
 if __name__ == '__main__':
+    ip_address = requests.get('https://api.ipify.org').text
+    print('My public IP address is: {}'.format(ip_address))
     app.run(host='0.0.0.0', port=8080)
