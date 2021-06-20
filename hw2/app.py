@@ -35,14 +35,12 @@ def get_milis(dt):
 def get_live_node_list():
     try:
         app.logger.info('get_live_node_list')
-        # now = get_milis(datetime.now())
-        # past_periond = now - datetime(seconds=delay_period)
-        # response = table.query(KeyConditionExpression=('lastAlive').between(get_milis(past_periond), get_milis(now)))
+        now = get_milis(datetime.now())
         response = table.scan()
-        app.logger.info(f'get_live_node_list-  responde: {response}')
+        app.logger.info(f'get_live_node_list-  response: {response}')
         nodes = []
         for x in response['Items']:
-            if (int)(x['lastAlive']) > now - delay_period:
+            if (int)(x['lastAlive']) >= now - delay_period:
                 nodes.append(x['ip'])
         return nodes
     except Exception as e:
