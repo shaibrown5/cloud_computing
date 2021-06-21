@@ -57,12 +57,6 @@ Instance2IP=$(aws cloudformation --region $REGION describe-stacks --stack-name s
 Instance3IP=$(aws cloudformation --region $REGION describe-stacks --stack-name shai-elad-stack --query "Stacks[0].Outputs[?OutputKey=='Instance3IP'].OutputValue" --output text)
 TGARN=$(aws cloudformation --region $REGION describe-stacks --stack-name shai-elad-stack --query "Stacks[0].Outputs[?OutputKey=='TargetGroup'].OutputValue" --output text)
 
-# put ther server file on the instances.
-# the other option for this was to create an s3 bucket, and then have the ec2 read and save the app.py from there during the
-# cloudformation start up under UserData.
-# this is better in our case
-
-
 
 # target health check command
 aws elbv2 describe-target-health  --target-group-arn $TGARN
@@ -70,7 +64,4 @@ aws elbv2 describe-target-health  --target-group-arn $TGARN
 DNS_ADD=$(aws elbv2 describe-load-balancers --names ShaiEladELB | jq -r .LoadBalancers[0].DNSName)
 echo $DNS_ADD
 echo "aws elbv2 describe-target-health  --target-group-arn $TGARN"
-
-
-
 
