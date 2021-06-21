@@ -50,6 +50,69 @@ Parameters:
 
 Resources:
 
+  aliveNodes:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: aliveNodes
+      AttributeDefinitions:
+        - AttributeName: "ip"
+          AttributeType: "S"
+        - AttributeName: "lastAlive"
+          AttributeType: "N"
+      KeySchema:
+        - AttributeName: "ip"
+          KeyType: "HASH"
+      ProvisionedThroughput:
+        ReadCapacityUnits: "5"
+        WriteCapacityUnits: "5"
+      GlobalSecondaryIndexes:
+        - IndexName: gsiCaseCountTable
+          KeySchema:
+            - AttributeName: lastAlive
+              KeyType: HASH
+          Projection:
+            ProjectionType: "ALL"
+          ProvisionedThroughput:
+            ReadCapacityUnits: "5"
+            WriteCapacityUnits: "5"
+    DependsOn:
+      - DynamoDBQueryPolicy
+
+  DynamoDBQueryPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: DynamoDBQueryPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: "dynamodb:*"
+            Resource: "*"
+      Roles:
+        - Ref: "TableRole"
+
+  TableRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "dynamodb.amazonaws.com"
+                - "ec2.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+
+  MyInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: "/"
+      Roles:
+        - Ref: "TableRole"
+
   ELBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -63,7 +126,7 @@ Resources:
       - IpProtocol: tcp
         FromPort: 80
         ToPort: 80
-        CidrIp: 0.0.0.0/0
+        CidrIp: !Ref 'SSHLocation'
 
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -78,7 +141,7 @@ Resources:
       - IpProtocol: tcp
         FromPort: 8080
         ToPort: 8080
-        CidrIp: !Ref 'VPCcidr'
+        CidrIp: 0.0.0.0/0
       - IpProtocol: tcp
         FromPort: 80
         ToPort: 80
@@ -93,6 +156,7 @@ Resources:
         - !Ref InstanceSecurityGroup
       KeyName: !Ref KeyName
       ImageId: !Ref LatestAmiId
+      IamInstanceProfile: !Ref MyInstanceProfile
       UserData:
         Fn::Base64: 
           !Sub |
@@ -106,9 +170,12 @@ Resources:
             pip3 install redis
             git clone https://github.com/shaibrown5/cloud_computing.git
             cd cloud_computing
+            git checkout _hotfix/less_strict_security
             pip3 install -r requirements.txt
             cd hw2
             python3 app.py
+    DependsOn:
+    - TableRole
 
 
   EC2Instance2:
@@ -119,6 +186,7 @@ Resources:
         - !Ref InstanceSecurityGroup
       KeyName: !Ref KeyName
       ImageId: !Ref LatestAmiId
+      IamInstanceProfile: !Ref MyInstanceProfile
       UserData:
         Fn::Base64: 
           !Sub |
@@ -132,9 +200,12 @@ Resources:
             pip3 install redis
             git clone https://github.com/shaibrown5/cloud_computing.git
             cd cloud_computing
+            git checkout _hotfix/less_strict_security
             pip3 install -r requirements.txt
             cd hw2
             python3 app.py
+    DependsOn:
+    - TableRole
 
 
   EC2Instance3:
@@ -145,6 +216,7 @@ Resources:
         - !Ref InstanceSecurityGroup
       KeyName: !Ref KeyName
       ImageId: !Ref LatestAmiId
+      IamInstanceProfile: !Ref MyInstanceProfile
       UserData:
         Fn::Base64: 
           !Sub |
@@ -158,9 +230,12 @@ Resources:
             pip3 install redis
             git clone https://github.com/shaibrown5/cloud_computing.git
             cd cloud_computing
+            git checkout _hotfix/less_strict_security
             pip3 install -r requirements.txt
             cd hw2
             python3 app.py
+    DependsOn:
+    - TableRole
 
 
 
