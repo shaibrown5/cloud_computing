@@ -156,6 +156,7 @@ Resources:
         - !Ref InstanceSecurityGroup
       KeyName: !Ref KeyName
       ImageId: !Ref LatestAmiId
+      IamInstanceProfile: !Ref MyInstanceProfile
       UserData:
         Fn::Base64: 
           !Sub |
@@ -173,6 +174,8 @@ Resources:
             pip3 install -r requirements.txt
             cd hw2
             python3 app.py
+        DependsOn:
+        - TableRole
 
 
   EC2Instance2:
@@ -183,6 +186,7 @@ Resources:
         - !Ref InstanceSecurityGroup
       KeyName: !Ref KeyName
       ImageId: !Ref LatestAmiId
+      IamInstanceProfile: !Ref MyInstanceProfile
       UserData:
         Fn::Base64: 
           !Sub |
@@ -200,6 +204,8 @@ Resources:
             pip3 install -r requirements.txt
             cd hw2
             python3 app.py
+        DependsOn:
+        - TableRole
 
 
   EC2Instance3:
@@ -210,6 +216,7 @@ Resources:
         - !Ref InstanceSecurityGroup
       KeyName: !Ref KeyName
       ImageId: !Ref LatestAmiId
+      IamInstanceProfile: !Ref MyInstanceProfile
       UserData:
         Fn::Base64: 
           !Sub |
@@ -227,6 +234,8 @@ Resources:
             pip3 install -r requirements.txt
             cd hw2
             python3 app.py
+        DependsOn:
+        - TableRole
 
 
 
