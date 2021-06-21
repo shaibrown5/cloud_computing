@@ -100,10 +100,10 @@ def get_live_node_list():
 
 @app.route('/put', methods=['GET', 'POST'])
 def put():
+    nodes = get_live_node_list()
     key = request.args.get('str_key')
     data = request.args.get('data')
     expiration_date = request.args.get('expiration_date')
-    nodes = get_live_node_list()
 
     key_v_node_id = xxhash.xxh64_intdigest(key) % 1024
 
