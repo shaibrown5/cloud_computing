@@ -174,8 +174,8 @@ Resources:
             pip3 install -r requirements.txt
             cd hw2
             python3 app.py
-        DependsOn:
-        - TableRole
+    DependsOn:
+    - TableRole
 
 
   EC2Instance2:
@@ -204,8 +204,8 @@ Resources:
             pip3 install -r requirements.txt
             cd hw2
             python3 app.py
-        DependsOn:
-        - TableRole
+    DependsOn:
+    - TableRole
 
 
   EC2Instance3:
@@ -234,8 +234,8 @@ Resources:
             pip3 install -r requirements.txt
             cd hw2
             python3 app.py
-        DependsOn:
-        - TableRole
+    DependsOn:
+    - TableRole
 
 
 
