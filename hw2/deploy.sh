@@ -37,7 +37,7 @@ STACK_RES=$(aws cloudformation create-stack --stack-name shai-elad-stack --templ
 	ParameterKey=VPCId,ParameterValue=$VPC_ID \
 	ParameterKey=VPCcidr,ParameterValue=$VPC_CIDR_BLOCK)
 
-echo "waiting for stack shai-elad-stack to be created"
+echo "waiting for stack to be created - this may take a while"
 STACK_ID=$(echo $STACK_RES | jq -r '.StackId')
 aws cloudformation wait stack-create-complete --stack-name $STACK_ID
 
@@ -56,6 +56,9 @@ Instance2IP=$(aws cloudformation --region $REGION describe-stacks --stack-name s
 Instance3IP=$(aws cloudformation --region $REGION describe-stacks --stack-name shai-elad-stack --query "Stacks[0].Outputs[?OutputKey=='Instance3IP'].OutputValue" --output text)
 TGARN=$(aws cloudformation --region $REGION describe-stacks --stack-name shai-elad-stack --query "Stacks[0].Outputs[?OutputKey=='TargetGroup'].OutputValue" --output text)
 
+Instance1ID=$(aws cloudformation --region $REGION describe-stacks --stack-name shai-elad-stack --query "Stacks[0].Outputs[?OutputKey=='InstanceId1'].OutputValue" --output text)
+echo "waiting until instance healthy"
+aws ec2 wait instance-status-ok --instance-ids $Instance1ID
 
 # target health check command
 aws elbv2 describe-target-health  --target-group-arn $TGARN
