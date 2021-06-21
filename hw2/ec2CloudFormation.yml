@@ -170,7 +170,6 @@ Resources:
             pip3 install redis
             git clone https://github.com/shaibrown5/cloud_computing.git
             cd cloud_computing
-            git checkout _hotfix/less_strict_security
             pip3 install -r requirements.txt
             cd hw2
             python3 app.py
@@ -200,7 +199,6 @@ Resources:
             pip3 install redis
             git clone https://github.com/shaibrown5/cloud_computing.git
             cd cloud_computing
-            git checkout _hotfix/less_strict_security
             pip3 install -r requirements.txt
             cd hw2
             python3 app.py
@@ -230,14 +228,11 @@ Resources:
             pip3 install redis
             git clone https://github.com/shaibrown5/cloud_computing.git
             cd cloud_computing
-            git checkout _hotfix/less_strict_security
             pip3 install -r requirements.txt
             cd hw2
             python3 app.py
     DependsOn:
     - TableRole
-
-
 
   ElasticLoadBalancer: 
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer

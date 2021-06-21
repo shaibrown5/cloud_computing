@@ -56,9 +56,9 @@ Instance2IP=$(aws cloudformation --region $REGION describe-stacks --stack-name s
 Instance3IP=$(aws cloudformation --region $REGION describe-stacks --stack-name shai-elad-stack --query "Stacks[0].Outputs[?OutputKey=='Instance3IP'].OutputValue" --output text)
 TGARN=$(aws cloudformation --region $REGION describe-stacks --stack-name shai-elad-stack --query "Stacks[0].Outputs[?OutputKey=='TargetGroup'].OutputValue" --output text)
 
-Instance1ID=$(aws cloudformation --region $REGION describe-stacks --stack-name shai-elad-stack --query "Stacks[0].Outputs[?OutputKey=='InstanceId1'].OutputValue" --output text)
-echo "waiting until instance healthy"
-aws ec2 wait instance-status-ok --instance-ids $Instance1ID
+echo " "
+echo "waiting abit for instance  to register healthy"
+sleep(20)
 
 # target health check command
 aws elbv2 describe-target-health  --target-group-arn $TGARN
@@ -66,4 +66,3 @@ aws elbv2 describe-target-health  --target-group-arn $TGARN
 DNS_ADD=$(aws elbv2 describe-load-balancers --names ShaiEladELB | jq -r .LoadBalancers[0].DNSName)
 echo $DNS_ADD
 echo "aws elbv2 describe-target-health  --target-group-arn $TGARN"
-
