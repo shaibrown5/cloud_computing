@@ -7,8 +7,7 @@ from uhashring import HashRing
 
 dynamodb = boto3.resource('dynamodb', region_name="us-east-2")
 table = dynamodb.Table('aliveNodes')
-# cache = redis.Redis(host='localhost', port=6379, db=0)
-delay_period = 30 * 1000
+delay_period = 15 * 1000
 last = 0
 ip_address = ""
 
