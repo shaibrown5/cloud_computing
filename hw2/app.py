@@ -87,10 +87,23 @@ def put():
 @app.route('/set_val', methods=['GET', 'POST'])
 def set_val():
     try:
-        key = request.args.get('str_key')
-        data = request.args.get('data')
-        expiration_date = request.args.get('expiration_date')
-        first_or_second = request.args.get('cache')
+        try:
+            key = request.args.get('str_key')
+            data = request.args.get('data')
+            expiration_date = request.args.get('expiration_date')
+            first_or_second = request.args.get('cache')
+        except ValueError as v:
+            # back up mode: updates the secondary_cache
+            # will throw an exception if different
+            backup = request.args.get('backup')
+
+            data_dict = request.get_json(force=True)
+            app.logger.info(data_dict)
+            secondary_cache.update(data)
+            print(data_dict)
+            return {'status code': 200,
+                    'msg': "backup worked"}
+
         dict_to_return = {'status code': 200}
 
         if first_or_second == 'primary':
@@ -106,7 +119,7 @@ def set_val():
 
     except Exception as e:
         return json.dumps({'status code': 404,
-                           'item': str(e)})
+                           'item': str(e) + "\nin set_val exception"})
 
 
 #  get items from nodes
@@ -163,22 +176,40 @@ def get_val():
 
 
 def backup_data():
-    # put all the secondary items in the
+    # put all the secondary items in the primary
     primary_cache.update(secondary_cache)
 
-    for key in secondary_cache:
-        alt_node = get_second_node_ip(key)
-        data = secondary_cache[key][0]
-        expiration_date = secondary_cache[key][1]
-        try:
-            if alt_node != '-1':
-                ans = requests.post(
-                    f'http://{alt_node}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}&cache=secondary')
+    alt_node = get_second_node_ip(list(secondary_cache.keys())[0])
+    try:
+        if alt_node != '-1':
+            ans = requests.post(f'http://{alt_node}:8080/set_val?backup=true', data=secondary_cache)
 
-            secondary_cache.pop(key)
-        except Exception as e:
-            return json.dumps({'status code': 404,
-                               'item': str(e)})
+        secondary_cache.clear()
+    except Exception as e:
+        return json.dumps({'status code': 404,
+                           'item': str(e)})
+
+    # for key in secondary_cache:
+    #     alt_node = get_second_node_ip(key)
+    #     data = secondary_cache[key][0]
+    #     expiration_date = secondary_cache[key][1]
+    #     try:
+    #         if alt_node != '-1':
+    #             ans = requests.post(
+    #                 f'http://{alt_node}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}&cache=secondary')
+    #
+    #         secondary_cache.pop(key)
+    #     except Exception as e:
+    #         return json.dumps({'status code': 404,
+    #                            'item': str(e)})
+
+
+@app.route('/test-data', methods=['GET', 'POST'])
+def test_get_data():
+    data = request.get_json(force=True)
+    app.logger.info(data)
+    print(data)
+    return data
 
 
 @app.route('/get-test', methods=['GET', 'POST'])
