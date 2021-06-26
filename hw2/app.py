@@ -167,6 +167,7 @@ def get_val():
 
 @app.route('/get-test', methods=['GET', 'POST'])
 def get_test():
+    update_live_nodes()
     try:
         ans_dict = {}
 
@@ -187,6 +188,7 @@ def get_test():
 
 @app.route('/nodes-list', methods=['GET', 'POST'])
 def nodes_list():
+    update_live_nodes()
     ans_dict = {}
     try:
         key = request.args.get('str_key')
@@ -202,6 +204,7 @@ def nodes_list():
 
 @app.route('/second-nodes', methods=['GET', 'POST'])
 def second_nodes_list():
+    update_live_nodes()
     ans_dict = {}
     try:
         key = request.args.get('str_key')
@@ -238,6 +241,7 @@ def live_node_list():
 
 @app.route('/all-nodes', methods=['GET', 'POST'])
 def all_nodes_list():
+    update_live_nodes()
     ans_dict = {}
     try:
         ans_dict['curr_dict_of_nodes'] = nodes_hash.nodes
@@ -252,12 +256,20 @@ def update_live_nodes():
     live_nodes_list = get_live_node_list()
     remove_list = []
 
+    update_hash_nodes(live_nodes_list)
+
     for node_key in nodes_hash.get_nodes():
         if node_key not in live_nodes_list:
             remove_list.append(node_key)
 
     for node_key in remove_list:
         nodes_hash.remove_node(node_key)
+
+
+def update_hash_nodes(live_nodes_list):
+    for node in live_nodes_list:
+        if node not in nodes_hash.get_nodes():
+            nodes_hash.add_node(node)
 
 
 def get_second_node_ip(key):
