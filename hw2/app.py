@@ -11,10 +11,10 @@ delay_period = 15 * 1000
 last = 0
 ip_address = ""
 
-
 # elb = boto3.client('elbv2', region_name='us-east-2')
 # ec2 = boto3.client('ec2', region_name='us-east-2')
-cache = {}
+primary_cache = {}
+secondary_cache = {}
 app = Flask(__name__)
 
 
@@ -69,11 +69,11 @@ def put():
 
         try:
             ans = requests.post(
-                f'http://{node_ip}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}')
+                f'http://{node_ip}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}&cache=primary')
 
             if second_node_ip != '-1':
                 ans = requests.post(
-                    f'http://{second_node_ip}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}')
+                    f'http://{second_node_ip}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}&cache=secondary')
         except requests.exceptions.ConnectionError:
             ans = json.dumps({'status_code': 404})
 
@@ -84,29 +84,23 @@ def put():
                            'item': str(e)})
 
 
-@app.route('/put-test', methods=['GET', 'POST'])
-def put_test():
-    key = request.args.get('str_key')
-    data = request.args.get('data')
-    exp_date = request.args.get('exp_date')
-
-    cache[key] = (data, exp_date)
-    print(cache)
-
-    return json.dumps({'status code': 200,
-                       'item': cache[key]})
-
-
 @app.route('/set_val', methods=['GET', 'POST'])
 def set_val():
     try:
         key = request.args.get('str_key')
         data = request.args.get('data')
         expiration_date = request.args.get('expiration_date')
-        cache[key] = (data, expiration_date)
-        print(cache)
+        first_or_second = request.args.get('cache')
+
+        if first_or_second == 'primary':
+            primary_cache[key] = (data, expiration_date)
+            print(primary_cache)
+        else:
+            secondary_cache[key] = (data, expiration_date)
+            print(secondary_cache)
+
         return json.dumps({'status code': 200,
-                           'item': cache[key]})
+                           'item': primary_cache[key]})
     except Exception as e:
         return json.dumps({'status code': 404,
                            'item': str(e)})
@@ -122,18 +116,12 @@ def get():
         alt_node = get_second_node_ip(key)
 
         try:
-            ans = requests.get(f'http://{node_ip}:8080/get_val?str_key={key}')
+            ans = requests.get(f'http://{node_ip}:8080/get_val?str_key={key}&cache=primary')
         except requests.exceptions.ConnectionError as c:
             try:
-                ans = requests.get(f'https://{alt_node}:8080/get_val?str_key={key}')
+                ans = requests.get(f'https://{alt_node}:8080/get_val?str_key={key}&cache=secondary')
             except requests.exceptions.ConnectionError as ce:
                 ans = json.dumps({'status_code': 404, 'item': str(ce)})
-
-        # except:
-        #     try:
-        #         ans = requests.get(f'https://{alt_node}:8080/get_val?str_key={key}')
-        #     except requests.exceptions.ConnectionError:
-        #         return ans
 
         return ans.json().get('item')
 
@@ -145,11 +133,36 @@ def get():
 @app.route('/get_val', methods=['GET', 'POST'])
 def get_val():
     key = request.args.get('str_key')
-    item = cache[key]
+    first_or_second = request.args.get('cache')
+
+    if first_or_second == 'primary':
+        item = primary_cache[key]
+    else:
+        item = secondary_cache[key]
+        backup_data()
+
     response = json.dumps({'status code': 200,
                            'item': item[0]})
     return response
 
+
+def backup_data():
+    # put all the secondary items in the
+    primary_cache.update(secondary_cache)
+
+    for key in secondary_cache:
+        alt_node = get_second_node_ip(key)
+        data = secondary_cache[key][0]
+        expiration_date = secondary_cache[key][1]
+        try:
+            if alt_node != '-1':
+                ans = requests.post(
+                    f'http://{alt_node}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}&cache=secondary')
+
+            secondary_cache.pop(key)
+        except Exception as e:
+            return json.dumps({'status code': 404,
+                               'item': str(e)})
 
 @app.route('/get-test', methods=['GET', 'POST'])
 def get_test():
@@ -219,10 +232,10 @@ def live_node_list():
         for item in response['Items']:
             if int(item['lastAlive']) >= now - delay_period:
                 nodes.append(item['ip'])
-        return json.dumps({'item':nodes})
+        return json.dumps({'item': nodes})
     except Exception as e:
         # app.logger.info(f'error in get_live_node_list {e}')
-        return json.dumps({'item':f"failed in the get_live_node_list {str(e)}"})
+        return json.dumps({'item': f"failed in the get_live_node_list {str(e)}"})
 
 
 @app.route('/all-nodes', methods=['GET', 'POST'])
