@@ -58,7 +58,7 @@ TGARN=$(aws cloudformation --region $REGION describe-stacks --stack-name shai-el
 
 echo " "
 echo "waiting abit for instance  to register healthy"
-sleep(20)
+sleep 5
 
 # target health check command
 aws elbv2 describe-target-health  --target-group-arn $TGARN

@@ -148,6 +148,21 @@ def get_val():
     return response
 
 
+@app.route('/get-test', methods=['GET', 'POST'])
+def get_test():
+    ans_dict = dict
+
+    ans_dict[key] = request.args.get('str_key')
+    ans_dict[curr_dict_of_nodes] = nodes_hash.nodes
+    ans_dict[node_ip] = nodes_hash.get_node(key)
+    ans_dict[second_ip] = get_second_node_ip(key)
+    update_live_nodes()
+    ans_dict[new_dict_of_nodes] = nodes_hash.nodes
+
+    return json.dumps({'status code': 200,
+                       'item': ans_dict})
+
+
 def update_live_nodes():
     nodes_list = get_live_node_list()
 
