@@ -150,7 +150,7 @@ def get_val():
 
 @app.route('/get-test', methods=['GET', 'POST'])
 def get_test():
-    ans_dict = dict
+    ans_dict = dict()
 
     ans_dict[key] = request.args.get('str_key')
     ans_dict[curr_dict_of_nodes] = nodes_hash.nodes
