@@ -179,7 +179,7 @@ def get_test():
                            'item': str(e)})
 
 
-@app.route('nodes-list', methods=['GET', 'POST'])
+@app.route('/nodes-list', methods=['GET', 'POST'])
 def nodes_list():
     ans_dict = dict()
 
@@ -191,7 +191,7 @@ def nodes_list():
                        'item': ans_dict})
 
 
-@app.route('second-nodes', methods=['GET', 'POST'])
+@app.route('/second-nodes', methods=['GET', 'POST'])
 def second_nodes_list():
     ans_dict = dict()
 
@@ -204,11 +204,11 @@ def second_nodes_list():
 
 
 def update_live_nodes():
-    nodes_list = get_live_node_list()
+    live_nodes_list = get_live_node_list()
 
     for node_key in nodes_hash.nodes:
-        if node_key not in nodes_list:
-            nodes_list.remove_node(node_key)
+        if node_key not in live_nodes_list:
+            live_nodes_list.remove_node(node_key)
 
 
 def get_second_node_ip(key):
