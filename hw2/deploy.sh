@@ -55,10 +55,10 @@ Instance1IP=$(aws cloudformation --region $REGION describe-stacks --stack-name s
 Instance2IP=$(aws cloudformation --region $REGION describe-stacks --stack-name shai-elad-stack --query "Stacks[0].Outputs[?OutputKey=='Instance2IP'].OutputValue" --output text)
 Instance3IP=$(aws cloudformation --region $REGION describe-stacks --stack-name shai-elad-stack --query "Stacks[0].Outputs[?OutputKey=='Instance3IP'].OutputValue" --output text)
 TGARN=$(aws cloudformation --region $REGION describe-stacks --stack-name shai-elad-stack --query "Stacks[0].Outputs[?OutputKey=='TargetGroup'].OutputValue" --output text)
+sleep 10
 
 echo " "
 echo "waiting abit for instance  to register healthy"
-sleep 5
 
 # target health check command
 aws elbv2 describe-target-health  --target-group-arn $TGARN
