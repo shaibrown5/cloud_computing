@@ -89,6 +89,7 @@ def put():
             ans = json.dumps({'status_code': 404})
 
         return ans.json()
+
     except Exception as e:
         return json.dumps({'status code': 404,
                            'item': str(e)})
@@ -148,6 +149,7 @@ def get():
         #         return ans
 
         return ans.json().get('item')
+
     except Exception as e:
         return json.dumps({'status code': 404,
                            'item': str(e)})
@@ -213,7 +215,7 @@ def second_nodes_list():
                        'item': ans_dict})
 
 
-@app.route('/live-nodes',methods=['GET','POST'])
+@app.route('/live-nodes', methods=['GET', 'POST'])
 def live_node_list():
     """
     list of Ip's for the node list.
@@ -279,5 +281,5 @@ if __name__ == '__main__':
     print('My public IP address is: {}'.format(ip_address))
     app.run(host='0.0.0.0', port=8080)
 
-    # sudo kill - 9 7711
     # sudo lsof - i: 8080
+    # sudo kill - 9 7711
