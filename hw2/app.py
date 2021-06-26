@@ -1,12 +1,8 @@
-import redis
 import json
-import xxhash
 from datetime import datetime
 from flask import Flask, request
 import requests
 import boto3
-import time
-import sys
 from uhashring import HashRing
 
 dynamodb = boto3.resource('dynamodb', region_name="us-east-2")
@@ -64,15 +60,9 @@ def health_check():
 @app.route('/put', methods=['GET', 'POST'])
 def put():
     try:
-        #    nodes = get_live_node_list()
         key = request.args.get('str_key')
         data = request.args.get('data')
         expiration_date = request.args.get('expiration_date')
-
-        # key_v_node_id = xxhash.xxh64_intdigest(key) % 1024
-        #
-        # node = nodes[(key_v_node_id % len(nodes))]
-        # alt_node = nodes[((key_v_node_id + 1) % len(nodes))]
 
         update_live_nodes()
         node_ip = nodes_hash.get_node(key)
@@ -114,8 +104,6 @@ def set_val():
         key = request.args.get('str_key')
         data = request.args.get('data')
         expiration_date = request.args.get('expiration_date')
-        # cache.s[key] = [data, expiration_date]
-        # cache.set(name=key, value=data, ex=expiration_date)
         cache[key] = (data, expiration_date)
         print(cache)
         return json.dumps({'status code': 200,
@@ -130,18 +118,18 @@ def set_val():
 def get():
     try:
         key = request.args.get('str_key')
-
-        # key_v_node_id = xxhash.xxh64_intdigest(key) % 1024
-        #     #
-        #     # node = nodes[key_v_node_id % len(nodes)]
-        #     # alt_node = nodes[((key_v_node_id + 1) % len(nodes))]
         update_live_nodes()
         node_ip = nodes_hash.get_node(key)
+        alt_node = get_second_node_ip(key)
 
         try:
             ans = requests.get(f'http://{node_ip}:8080/get_val?str_key={key}')
         except requests.exceptions.ConnectionError as c:
-            ans = json.dumps({'status_code': 404})
+            try:
+                ans = requests.get(f'https://{alt_node}:8080/get_val?str_key={key}')
+            except requests.exceptions.ConnectionError as ce:
+                ans = json.dumps({'status_code': 404, 'item': str(ce)})
+
         # except:
         #     try:
         #         ans = requests.get(f'https://{alt_node}:8080/get_val?str_key={key}')
@@ -152,13 +140,12 @@ def get():
 
     except Exception as e:
         return json.dumps({'status code': 404,
-                           'item': str(e)})
+                           'item': 'Item not in Cache'})
 
 
 @app.route('/get_val', methods=['GET', 'POST'])
 def get_val():
     key = request.args.get('str_key')
-    # item = cache.get(key)
     item = cache[key]
     response = json.dumps({'status code': 200,
                            'item': item[0]})
@@ -253,6 +240,11 @@ def all_nodes_list():
 
 
 def update_live_nodes():
+    """
+    This method updates the list of nodes in the hash list
+    by deleteing nodes that are no longer alive, and added new nodes.
+    :return:
+    """
     live_nodes_list = get_live_node_list()
     remove_list = []
 
@@ -267,12 +259,22 @@ def update_live_nodes():
 
 
 def update_hash_nodes(live_nodes_list):
+    """
+    This method adds new nodes to the hash pool
+    :param live_nodes_list: list of currently alive nodes
+    :return:
+    """
     for node in live_nodes_list:
         if node not in nodes_hash.get_nodes():
             nodes_hash.add_node(node)
 
 
 def get_second_node_ip(key):
+    """
+    This method gets the next node ip to send the data to
+    :param key: the wanted key to map
+    :return:
+    """
     try:
         original_node = nodes_hash.get_node(key)
         nodes_hash.remove_node(original_node)
