@@ -62,29 +62,33 @@ def get_millis(dt):
 
 @app.route('/put', methods=['GET', 'POST'])
 def put():
-    #    nodes = get_live_node_list()
-    key = request.args.get('str_key')
-    data = request.args.get('data')
-    expiration_date = request.args.get('expiration_date')
-
-    # key_v_node_id = xxhash.xxh64_intdigest(key) % 1024
-    #
-    # node = nodes[(key_v_node_id % len(nodes))]
-    # alt_node = nodes[((key_v_node_id + 1) % len(nodes))]
-
-    update_live_nodes()
-    node_ip = nodes_hash.get_node(key)
-    second_node_ip = get_second_node_ip(key)
-
     try:
-        ans = requests.post(
-            f'http://{node_ip}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}')
-        ans = requests.post(
-            f'http://{second_node_ip}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}')
-    except requests.exceptions.ConnectionError:
-        ans = json.dumps({'status_code': 404})
+        #    nodes = get_live_node_list()
+        key = request.args.get('str_key')
+        data = request.args.get('data')
+        expiration_date = request.args.get('expiration_date')
 
-    return ans.json()
+        # key_v_node_id = xxhash.xxh64_intdigest(key) % 1024
+        #
+        # node = nodes[(key_v_node_id % len(nodes))]
+        # alt_node = nodes[((key_v_node_id + 1) % len(nodes))]
+
+        update_live_nodes()
+        node_ip = nodes_hash.get_node(key)
+        second_node_ip = get_second_node_ip(key)
+
+        try:
+            ans = requests.post(
+                f'http://{node_ip}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}')
+            ans = requests.post(
+                f'http://{second_node_ip}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}')
+        except requests.exceptions.ConnectionError:
+            ans = json.dumps({'status_code': 404})
+
+        return ans.json()
+    except Exception as e:
+        return json.dumps({'status code': 404,
+                           'item': str(e)})
 
 
 @app.route('/put-test', methods=['GET', 'POST'])
@@ -102,41 +106,48 @@ def put_test():
 
 @app.route('/set_val', methods=['GET', 'POST'])
 def set_val():
-    key = request.args.get('str_key')
-    data = request.args.get('data')
-    expiration_date = request.args.get('expiration_date')
-    # cache.s[key] = [data, expiration_date]
-    # cache.set(name=key, value=data, ex=expiration_date)
-    cache[key] = (data, expiration_date)
-    print(cache)
-    return json.dumps({'status code': 200,
-                       'item': cache[key]})
+    try:
+        key = request.args.get('str_key')
+        data = request.args.get('data')
+        expiration_date = request.args.get('expiration_date')
+        # cache.s[key] = [data, expiration_date]
+        # cache.set(name=key, value=data, ex=expiration_date)
+        cache[key] = (data, expiration_date)
+        print(cache)
+        return json.dumps({'status code': 200,
+                           'item': cache[key]})
+    except Exception as e:
+        return json.dumps({'status code': 404,
+                           'item': str(e)})
 
 
 #  get items from nodes
 @app.route('/get', methods=['GET', 'POST'])
 def get():
-    key = request.args.get('str_key')
-
-    # key_v_node_id = xxhash.xxh64_intdigest(key) % 1024
-    #     #
-    #     # node = nodes[key_v_node_id % len(nodes)]
-    #     # alt_node = nodes[((key_v_node_id + 1) % len(nodes))]
-    update_live_nodes()
-    node_ip = nodes_hash.get_node(key)
-
     try:
-        ans = requests.get(f'http://{node_ip}:8080/get_val?str_key={key}')
-    except requests.exceptions.ConnectionError as c:
-        ans = json.dumps({'status_code': 404,
-                          'item': str(c)})
-    # except:
-    #     try:
-    #         ans = requests.get(f'https://{alt_node}:8080/get_val?str_key={key}')
-    #     except requests.exceptions.ConnectionError:
-    #         return ans
+        key = request.args.get('str_key')
 
-    return ans.json().get('item')
+        # key_v_node_id = xxhash.xxh64_intdigest(key) % 1024
+        #     #
+        #     # node = nodes[key_v_node_id % len(nodes)]
+        #     # alt_node = nodes[((key_v_node_id + 1) % len(nodes))]
+        update_live_nodes()
+        node_ip = nodes_hash.get_node(key)
+
+        try:
+            ans = requests.get(f'http://{node_ip}:8080/get_val?str_key={key}')
+        except requests.exceptions.ConnectionError as c:
+            ans = json.dumps({'status_code': 404})
+        # except:
+        #     try:
+        #         ans = requests.get(f'https://{alt_node}:8080/get_val?str_key={key}')
+        #     except requests.exceptions.ConnectionError:
+        #         return ans
+
+        return ans.json().get('item')
+    except Exception as e:
+        return json.dumps({'status code': 404,
+                           'item': str(e)})
 
 
 @app.route('/get_val', methods=['GET', 'POST'])
@@ -151,14 +162,42 @@ def get_val():
 
 @app.route('/get-test', methods=['GET', 'POST'])
 def get_test():
+    try:
+        ans_dict = dict()
+
+        ans_dict['key'] = request.args.get('str_key')
+        ans_dict['curr_dict_of_nodes'] = nodes_hash.nodes
+        ans_dict['node_ip'] = nodes_hash.get_node(key)
+        ans_dict['second_ip'] = get_second_node_ip(key)
+        update_live_nodes()
+        ans_dict['new_dict_of_nodes'] = nodes_hash.nodes
+
+        return json.dumps({'status code': 200,
+                           'item': ans_dict})
+    except Exception as e:
+        return json.dumps({'status code': 404,
+                           'item': str(e)})
+
+
+@app.route('nodes-list', methods=['GET', 'POST'])
+def nodes_list():
     ans_dict = dict()
 
     ans_dict['key'] = request.args.get('str_key')
     ans_dict['curr_dict_of_nodes'] = nodes_hash.nodes
     ans_dict['node_ip'] = nodes_hash.get_node(key)
+
+    return json.dumps({'status code': 200,
+                       'item': ans_dict})
+
+
+@app.route('second-nodes', methods=['GET', 'POST'])
+def second_nodes_list():
+    ans_dict = dict()
+
+    ans_dict['key'] = request.args.get('str_key')
+    ans_dict['curr_dict_of_nodes'] = nodes_hash.nodes
     ans_dict['second_ip'] = get_second_node_ip(key)
-    update_live_nodes()
-    ans_dict['new_dict_of_nodes'] = nodes_hash.nodes
 
     return json.dumps({'status code': 200,
                        'item': ans_dict})
