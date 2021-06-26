@@ -91,16 +91,19 @@ def set_val():
         data = request.args.get('data')
         expiration_date = request.args.get('expiration_date')
         first_or_second = request.args.get('cache')
+        dict_to_return = {'status code': 200}
 
         if first_or_second == 'primary':
             primary_cache[key] = (data, expiration_date)
+            dict_to_return['item'] = primary_cache[key]
             print(primary_cache)
         else:
             secondary_cache[key] = (data, expiration_date)
+            dict_to_return['item'] = secondary_cache[key]
             print(secondary_cache)
 
-        return json.dumps({'status code': 200,
-                           'item': primary_cache[key]})
+        return json.dumps(dict_to_return)
+
     except Exception as e:
         return json.dumps({'status code': 404,
                            'item': str(e)})
@@ -135,15 +138,28 @@ def get_val():
     key = request.args.get('str_key')
     first_or_second = request.args.get('cache')
 
-    if first_or_second == 'primary':
-        item = primary_cache[key]
-    else:
-        item = secondary_cache[key]
-        backup_data()
+    try:
+        if first_or_second == 'primary':
+            try:
+                item = primary_cache[key]
+            except KeyError as k:
+                try:
+                    item = secondary_cache[key]
+                    backup_data()
+                except KeyError as ke:
+                    return json.dumps({'status code': 404,
+                                       'error': str(ke)})
+        else:
+            item = secondary_cache[key]
+            backup_data()
 
-    response = json.dumps({'status code': 200,
-                           'item': item[0]})
-    return response
+        response = json.dumps({'status code': 200,
+                               'item': item[0]})
+        return response
+
+    except Exception as e:
+        return json.dumps({'status code': 404,
+                           'error': str(e)})
 
 
 def backup_data():
@@ -163,6 +179,7 @@ def backup_data():
         except Exception as e:
             return json.dumps({'status code': 404,
                                'item': str(e)})
+
 
 @app.route('/get-test', methods=['GET', 'POST'])
 def get_test():
@@ -307,5 +324,5 @@ if __name__ == '__main__':
     print('My public IP address is: {}'.format(ip_address))
     app.run(host='0.0.0.0', port=8080)
 
-    # sudo lsof - i: 8080
-    # sudo kill - 9 7711
+    # sudo lsof -i :8080
+    # sudo kill -9 7711
