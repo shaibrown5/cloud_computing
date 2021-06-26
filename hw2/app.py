@@ -6,6 +6,7 @@ from flask import Flask, request
 import requests
 import boto3
 import time
+import sys
 from uhashring import HashRing
 
 dynamodb = boto3.resource('dynamodb', region_name="us-east-2")
@@ -18,6 +19,10 @@ ip_address = ""
 
 # elb = boto3.client('elbv2', region_name='us-east-2')
 # ec2 = boto3.client('ec2', region_name='us-east-2')
+
+
+def get_millis(dt):
+    return int(round(dt.timestamp() * 1000))
 
 
 def get_live_node_list():
@@ -37,7 +42,7 @@ def get_live_node_list():
         return nodes
     except Exception as e:
         # app.logger.info(f'error in get_live_node_list {e}')
-        return "failed in the get_live_node_list"
+        return f"failed in the get_live_node_list {str(e)}"
 
 
 cache = {}
@@ -54,10 +59,6 @@ def health_check():
             }
     table.put_item(Item=item)
     return f'it is I {ip_address} - at time {timestamp} im still alive'
-
-
-def get_millis(dt):
-    return int(round(dt.timestamp() * 1000))
 
 
 @app.route('/put', methods=['GET', 'POST'])
@@ -80,8 +81,10 @@ def put():
         try:
             ans = requests.post(
                 f'http://{node_ip}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}')
-            ans = requests.post(
-                f'http://{second_node_ip}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}')
+
+            if second_node_ip != '-1':
+                ans = requests.post(
+                    f'http://{second_node_ip}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}')
         except requests.exceptions.ConnectionError:
             ans = json.dumps({'status_code': 404})
 
@@ -163,7 +166,7 @@ def get_val():
 @app.route('/get-test', methods=['GET', 'POST'])
 def get_test():
     try:
-        ans_dict = dict()
+        ans_dict = {}
 
         key = request.args.get('str_key')
         ans_dict['key'] = key
@@ -193,12 +196,14 @@ def nodes_list():
 
 @app.route('/second-nodes', methods=['GET', 'POST'])
 def second_nodes_list():
-    ans_dict = dict()
-
-    key = request.args.get('str_key')
-    ans_dict['key'] = key
-    ans_dict['curr_dict_of_nodes'] = nodes_hash.nodes
-    ans_dict['second_ip'] = get_second_node_ip(key)
+    ans_dict = {}
+    try:
+        key = request.args.get('str_key')
+        ans_dict['key'] = key
+        ans_dict['curr_dict_of_nodes'] = nodes_hash.nodes
+        ans_dict['second_ip'] = get_second_node_ip(key)
+    except Exception as e:
+        return json.dumps({'item': str(e)})
 
     return json.dumps({'status code': 200,
                        'item': ans_dict})
@@ -206,17 +211,28 @@ def second_nodes_list():
 
 def update_live_nodes():
     live_nodes_list = get_live_node_list()
+    remove_list = []
 
     for node_key in nodes_hash.nodes:
         if node_key not in live_nodes_list:
-            nodes_hash.remove_node(node_key)
+            remove_list.append(node_key)
+
+    for node_key in remove_list:
+        nodes_hash.remove_node(node_key)
 
 
 def get_second_node_ip(key):
-    original_node = nodes_hash.get_node(key)
-    nodes_hash.remove_node(original_node)
-    second_node = nodes_hash.get_node(key)
-    nodes_hash.add_node(original_node)
+    try:
+        original_node = nodes_hash.get_node(key)
+        nodes_hash.remove_node(original_node)
+        second_node = nodes_hash.get_node(key)
+
+        if second_node is None:
+            second_node = '-1'
+
+        nodes_hash.add_node(original_node)
+    except Exception as e:
+        return json.dumps({'item': str(e)})
 
     return second_node
 
@@ -225,3 +241,6 @@ if __name__ == '__main__':
     ip_address = requests.get('https://api.ipify.org').text
     print('My public IP address is: {}'.format(ip_address))
     app.run(host='0.0.0.0', port=8080)
+
+    # sudo kill - 9 7711
+    # sudo lsof - i: 8080
