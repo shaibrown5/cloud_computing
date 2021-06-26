@@ -165,7 +165,8 @@ def get_test():
     try:
         ans_dict = dict()
 
-        ans_dict['key'] = request.args.get('str_key')
+        key = request.args.get('str_key')
+        ans_dict['key'] = key
         ans_dict['curr_dict_of_nodes'] = nodes_hash.nodes
         ans_dict['node_ip'] = nodes_hash.get_node(key)
         ans_dict['second_ip'] = get_second_node_ip(key)
@@ -181,9 +182,8 @@ def get_test():
 
 @app.route('/nodes-list', methods=['GET', 'POST'])
 def nodes_list():
-    ans_dict = dict()
-
-    ans_dict['key'] = request.args.get('str_key')
+    key = request.args.get('str_key')
+    ans_dict['key'] = key
     ans_dict['curr_dict_of_nodes'] = nodes_hash.nodes
     ans_dict['node_ip'] = nodes_hash.get_node(key)
 
@@ -195,7 +195,8 @@ def nodes_list():
 def second_nodes_list():
     ans_dict = dict()
 
-    ans_dict['key'] = request.args.get('str_key')
+    key = request.args.get('str_key')
+    ans_dict['key'] = key
     ans_dict['curr_dict_of_nodes'] = nodes_hash.nodes
     ans_dict['second_ip'] = get_second_node_ip(key)
 
@@ -208,7 +209,7 @@ def update_live_nodes():
 
     for node_key in nodes_hash.nodes:
         if node_key not in live_nodes_list:
-            live_nodes_list.remove_node(node_key)
+            nodes_hash.remove_node(node_key)
 
 
 def get_second_node_ip(key):
