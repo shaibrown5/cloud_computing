@@ -19,6 +19,8 @@ ip_address = ""
 
 # elb = boto3.client('elbv2', region_name='us-east-2')
 # ec2 = boto3.client('ec2', region_name='us-east-2')
+cache = {}
+app = Flask(__name__)
 
 
 def get_millis(dt):
@@ -45,8 +47,6 @@ def get_live_node_list():
         return f"failed in the get_live_node_list {str(e)}"
 
 
-cache = {}
-app = Flask(__name__)
 # this will hold the nodes , and hash them consistentaly
 nodes_hash = HashRing(nodes=get_live_node_list())
 
@@ -185,10 +185,14 @@ def get_test():
 
 @app.route('/nodes-list', methods=['GET', 'POST'])
 def nodes_list():
-    key = request.args.get('str_key')
-    ans_dict['key'] = key
-    ans_dict['curr_dict_of_nodes'] = nodes_hash.nodes
-    ans_dict['node_ip'] = nodes_hash.get_node(key)
+    ans_dict = {}
+    try:
+        key = request.args.get('str_key')
+        ans_dict['key'] = key
+        ans_dict['curr_dict_of_nodes'] = nodes_hash.nodes
+        ans_dict['node_ip'] = nodes_hash.get_node(key)
+    except Exception as e:
+        return json.dumps({'item': str(e)})
 
     return json.dumps({'status code': 200,
                        'item': ans_dict})
@@ -209,11 +213,44 @@ def second_nodes_list():
                        'item': ans_dict})
 
 
+@app.route('/live-nodes',methods=['GET','POST'])
+def live_node_list():
+    """
+    list of Ip's for the node list.
+    :return:
+    """
+    try:
+        app.logger.info('get_live_node_list')
+        now = get_millis(datetime.now())
+        response = table.scan()
+        app.logger.info(f'get_live_node_list-  response: {response}')
+        nodes = []
+        for item in response['Items']:
+            if int(item['lastAlive']) >= now - delay_period:
+                nodes.append(item['ip'])
+        return json.dumps({'item':nodes})
+    except Exception as e:
+        # app.logger.info(f'error in get_live_node_list {e}')
+        return json.dumps({'item':f"failed in the get_live_node_list {str(e)}"})
+
+
+@app.route('/all-nodes', methods=['GET', 'POST'])
+def all_nodes_list():
+    ans_dict = {}
+    try:
+        ans_dict['curr_dict_of_nodes'] = nodes_hash.nodes
+    except Exception as e:
+        return json.dumps({'item': str(e)})
+
+    return json.dumps({'status code': 200,
+                       'item': ans_dict})
+
+
 def update_live_nodes():
     live_nodes_list = get_live_node_list()
     remove_list = []
 
-    for node_key in nodes_hash.nodes:
+    for node_key in nodes_hash.get_nodes():
         if node_key not in live_nodes_list:
             remove_list.append(node_key)
 
