@@ -1,4 +1,4 @@
-KEY_NAME="shai-elad-key-`date +'%N'`"
+KEY_NAME="shai-elad-key"
 KEY_PEM="$KEY_NAME.pem"
 
 echo "create key pair $KEY_PEM to connect to instances and save locally"

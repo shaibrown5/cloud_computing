@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 
-Description: Template that creates 3 ec2 instances, 2 sec groups for elb and ec2. it outputs relevant information needed for the rest of the deploy
+Description: Template that creates 3 ec2 instances, 2 sec groups for elb and ec2, IAM and dynamo db table. it outputs relevant information needed for the rest of the deploy
 
 Parameters:
   KeyName:
@@ -109,6 +109,7 @@ Resources:
   MyInstanceProfile:
     Type: "AWS::IAM::InstanceProfile"
     Properties:
+      InstanceProfileName: shaiEladProfileName
       Path: "/"
       Roles:
         - Ref: "TableRole"
@@ -131,6 +132,7 @@ Resources:
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
+      GroupName: shaiEladSecGroup
       GroupDescription: Enable SSH access via port 22 and http access
       VpcId: !Ref VPCId
       SecurityGroupIngress:
@@ -168,8 +170,7 @@ Resources:
             sudo apt-get install redis-server -y
             sudo service redis-server start
             pip3 install redis
-            git clone -b new-hash https://github.com/shaibrown5/cloud_computing.git
-            git checkout _feature/add_node_support
+            git clone -b _feature/add_node_support https://github.com/shaibrown5/cloud_computing.git
             cd cloud_computing
             pip3 install -r requirements.txt
             cd hw2
@@ -198,8 +199,7 @@ Resources:
             sudo apt-get install redis-server -y
             sudo service redis-server start
             pip3 install redis
-            git clone -b new-hash https://github.com/shaibrown5/cloud_computing.git
-            git checkout _feature/add_node_support
+            git clone -b _feature/add_node_support https://github.com/shaibrown5/cloud_computing.git
             cd cloud_computing
             pip3 install -r requirements.txt
             cd hw2
@@ -228,8 +228,7 @@ Resources:
             sudo apt-get install redis-server -y
             sudo service redis-server start
             pip3 install redis
-            git clone -b new-hash https://github.com/shaibrown5/cloud_computing.git
-            git checkout _feature/add_node_support
+            git clone -b _feature/add_node_support https://github.com/shaibrown5/cloud_computing.git
             cd cloud_computing
             pip3 install -r requirements.txt
             cd hw2
