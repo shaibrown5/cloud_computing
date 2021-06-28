@@ -57,4 +57,4 @@ Outputs:
     Value: !Ref 'EC2Instance'
   InstanceIP:
     Description: Public IP address of the created EC2 instance
-    Value: !GetAtt [EC2Instance1, PublicIp]
+    Value: !GetAtt [EC2Instance, PublicIp]

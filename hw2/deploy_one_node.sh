@@ -9,7 +9,7 @@ echo "getting all subnets and vpc id's"
 SEC_GROUP=$(aws ec2 describe-security-groups --group-names shaiEladSecGroup | jq -r .SecurityGroups[0].GroupId)
 KEY_NAME="shai-elad-key"
 
-NOW=$(date +"%T")
+NOW=$((1 + $RANDOM % 1000))
 STACK_NAME="shai-elad-add-node-stack-$NOW"
 
 
