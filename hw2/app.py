@@ -387,6 +387,7 @@ def get_second_node_ip(key):
 
 
 if __name__ == '__main__':
+
     ip_address = requests.get('https://api.ipify.org').text
     print('My public IP address is: {}'.format(ip_address))
     app.run(host='0.0.0.0', port=8080)
