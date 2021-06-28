@@ -1,4 +1,4 @@
-KEY_NAME="shai-elad-key-`date +'%N'`"
+KEY_NAME="shai-elad-key"
 KEY_PEM="$KEY_NAME.pem"
 
 echo "create key pair $KEY_PEM to connect to instances and save locally"
@@ -27,7 +27,7 @@ echo $VPC_ID
 echo $VPC_CIDR_BLOCK
 
 echo "createing stack shai-elad stack now"
-STACK_RES=$(aws cloudformation create-stack --stack-name shai-elad-stack --template-body file://ec2CloudFormation.yml --capabilities CAPABILITY_IAM \
+STACK_RES=$(aws cloudformation create-stack --stack-name shai-elad-stack --template-body file://ec2CloudFormation.yml --capabilities CAPABILITY_NAMED_IAM \
 	--parameters ParameterKey=InstanceType,ParameterValue=t2.micro \
 	ParameterKey=KeyName,ParameterValue=$KEY_NAME \
 	ParameterKey=SSHLocation,ParameterValue=$MY_IP/32 \

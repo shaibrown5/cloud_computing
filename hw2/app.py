@@ -11,10 +11,10 @@ delay_period = 15 * 1000
 last = 0
 ip_address = ""
 
-
 # elb = boto3.client('elbv2', region_name='us-east-2')
 # ec2 = boto3.client('ec2', region_name='us-east-2')
-cache = {}
+primary_cache = {}
+secondary_cache = {}
 app = Flask(__name__)
 
 
@@ -62,18 +62,21 @@ def put():
         key = request.args.get('str_key')
         data = request.args.get('data')
         expiration_date = request.args.get('expiration_date')
-
+        number_of_nodes = len(nodes_hash.get_nodes())
         update_live_nodes()
+        if number_of_nodes < len(nodes_hash.get_nodes()):
+            initiate_redistribution()
+
         node_ip = nodes_hash.get_node(key)
         second_node_ip = get_second_node_ip(key)
 
         try:
             ans = requests.post(
-                f'http://{node_ip}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}')
+                f'http://{node_ip}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}&cache=primary')
 
             if second_node_ip != '-1':
                 ans = requests.post(
-                    f'http://{second_node_ip}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}')
+                    f'http://{second_node_ip}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}&cache=secondary')
         except requests.exceptions.ConnectionError:
             ans = json.dumps({'status_code': 404})
 
@@ -84,32 +87,42 @@ def put():
                            'item': str(e)})
 
 
-@app.route('/put-test', methods=['GET', 'POST'])
-def put_test():
-    key = request.args.get('str_key')
-    data = request.args.get('data')
-    exp_date = request.args.get('exp_date')
-
-    cache[key] = (data, exp_date)
-    print(cache)
-
-    return json.dumps({'status code': 200,
-                       'item': cache[key]})
-
-
 @app.route('/set_val', methods=['GET', 'POST'])
 def set_val():
     try:
-        key = request.args.get('str_key')
-        data = request.args.get('data')
-        expiration_date = request.args.get('expiration_date')
-        cache[key] = (data, expiration_date)
-        print(cache)
-        return json.dumps({'status code': 200,
-                           'item': cache[key]})
+        try:
+            key = request.args.get('str_key')
+            data = request.args.get('data')
+            expiration_date = request.args.get('expiration_date')
+            first_or_second = request.args.get('cache')
+        except ValueError as v:
+            # back up mode: updates the secondary_cache
+            # will throw an exception if different
+            backup = request.args.get('backup')
+
+            data_dict = request.get_json(force=True)
+            app.logger.info(data_dict)
+            secondary_cache.update(data)
+            print(data_dict)
+            return {'status code': 200,
+                    'msg': "backup worked"}
+
+        dict_to_return = {'status code': 200}
+
+        if first_or_second == 'primary':
+            primary_cache[key] = (data, expiration_date)
+            dict_to_return['item'] = primary_cache[key]
+            print(primary_cache)
+        else:
+            secondary_cache[key] = (data, expiration_date)
+            dict_to_return['item'] = secondary_cache[key]
+            print(secondary_cache)
+
+        return json.dumps(dict_to_return)
+
     except Exception as e:
         return json.dumps({'status code': 404,
-                           'item': str(e)})
+                           'item': str(e) + "\nin set_val exception"})
 
 
 #  get items from nodes
@@ -117,23 +130,20 @@ def set_val():
 def get():
     try:
         key = request.args.get('str_key')
+        number_of_nodes = len(nodes_hash.get_nodes())
         update_live_nodes()
+        if number_of_nodes < len(nodes_hash.get_nodes()):
+            initiate_redistribution()
         node_ip = nodes_hash.get_node(key)
         alt_node = get_second_node_ip(key)
 
         try:
-            ans = requests.get(f'http://{node_ip}:8080/get_val?str_key={key}')
+            ans = requests.get(f'http://{node_ip}:8080/get_val?str_key={key}&cache=primary')
         except requests.exceptions.ConnectionError as c:
             try:
-                ans = requests.get(f'https://{alt_node}:8080/get_val?str_key={key}')
+                ans = requests.get(f'https://{alt_node}:8080/get_val?str_key={key}&cache=secondary')
             except requests.exceptions.ConnectionError as ce:
                 ans = json.dumps({'status_code': 404, 'item': str(ce)})
-
-        # except:
-        #     try:
-        #         ans = requests.get(f'https://{alt_node}:8080/get_val?str_key={key}')
-        #     except requests.exceptions.ConnectionError:
-        #         return ans
 
         return ans.json().get('item')
 
@@ -145,10 +155,97 @@ def get():
 @app.route('/get_val', methods=['GET', 'POST'])
 def get_val():
     key = request.args.get('str_key')
-    item = cache[key]
-    response = json.dumps({'status code': 200,
-                           'item': item[0]})
-    return response
+    first_or_second = request.args.get('cache')
+
+    try:
+        if first_or_second == 'primary':
+            try:
+                item = primary_cache[key]
+            except KeyError as k:
+                try:
+                    item = secondary_cache[key]
+                    backup_data()
+                except KeyError as ke:
+                    return json.dumps({'status code': 404,
+                                       'error': str(ke)})
+        else:
+            item = secondary_cache[key]
+            backup_data()
+
+        response = json.dumps({'status code': 200,
+                               'item': item[0]})
+        return response
+
+    except Exception as e:
+        return json.dumps({'status code': 404,
+                           'error': str(e)})
+
+
+def backup_data():
+    #     # put all the secondary items in the primary
+    #     primary_cache.update(secondary_cache)
+    #
+    #     alt_node = get_second_node_ip(list(secondary_cache.keys())[0])
+    #     try:
+    #         if alt_node != '-1':
+    #             ans = requests.post(f'http://{alt_node}:8080/set_val?backup=true', data=secondary_cache)
+    #
+    #         secondary_cache.clear()
+    #     except Exception as e:
+    #         return json.dumps({'status code': 404,
+    #                            'item': str(e)})
+
+    for key in secondary_cache:
+        alt_node = get_second_node_ip(key)
+        data = secondary_cache[key][0]
+        expiration_date = secondary_cache[key][1]
+        try:
+            if alt_node != '-1':
+                ans = requests.post(
+                    f'http://{alt_node}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}&cache=secondary')
+
+            secondary_cache.pop(key)
+        except Exception as e:
+            return json.dumps({'status code': 404,
+                               'item': str(e)})
+
+
+def initiate_redistribution():
+    for node in nodes_hash:
+        try:
+            if node != '-1':
+                ans = requests.post(
+                    f'http://{node}:8080/redistribute_data')
+        except Exception as e:
+            return json.dumps({'status code': 404,
+                               'item': str(e)})
+
+
+@app.route('/redistribute_data', methods=['GET', 'POST'])
+def redistribute_data():
+    for key in secondary_cache:
+        alt_node = get_second_node_ip(key)
+        data = secondary_cache[key][0]
+        expiration_date = secondary_cache[key][1]
+        if alt_node == ip_address:
+            continue
+        else:
+            try:
+                if alt_node != '-1':
+                    ans = requests.post(
+                        f'http://{alt_node}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}&cache=secondary')
+                secondary_cache.pop(key)
+            except Exception as e:
+                return json.dumps({'status code': 404,
+                                   'item': str(e)})
+
+
+@app.route('/test-data', methods=['GET', 'POST'])
+def test_get_data():
+    data = request.get_json(force=True)
+    app.logger.info(data)
+    print(data)
+    return data
 
 
 @app.route('/get-test', methods=['GET', 'POST'])
@@ -219,10 +316,10 @@ def live_node_list():
         for item in response['Items']:
             if int(item['lastAlive']) >= now - delay_period:
                 nodes.append(item['ip'])
-        return json.dumps({'item':nodes})
+        return json.dumps({'item': nodes})
     except Exception as e:
         # app.logger.info(f'error in get_live_node_list {e}')
-        return json.dumps({'item':f"failed in the get_live_node_list {str(e)}"})
+        return json.dumps({'item': f"failed in the get_live_node_list {str(e)}"})
 
 
 @app.route('/all-nodes', methods=['GET', 'POST'])
@@ -290,9 +387,10 @@ def get_second_node_ip(key):
 
 
 if __name__ == '__main__':
+
     ip_address = requests.get('https://api.ipify.org').text
     print('My public IP address is: {}'.format(ip_address))
     app.run(host='0.0.0.0', port=8080)
 
-    # sudo lsof - i: 8080
-    # sudo kill - 9 7711
+    # sudo lsof -i :8080
+    # sudo kill -9 7711

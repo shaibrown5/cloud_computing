@@ -1,0 +1,28 @@
+[
+  {
+      "ResourceType":"AWS::DynamoDB::Table",
+      "LogicalResourceId":"aliveNodes",
+      "ResourceIdentifier": {
+        "TableName":"aliveNodes"
+      }
+  },
+  {
+      "ResourceType":"AWS::IAM::Policy",
+      "LogicalResourceId":"DynamoDBQueryPolicy",
+      "ResourceIdentifier": {
+        "PolicyName":"DynamoDBQueryPolicy"
+      }
+  },
+  {
+    "ResourceType":"AWS::IAM::InstanceProfile",
+    "LogicalResourceId":"MyInstanceProfile"
+  },
+  {
+      "ResourceType":"AWS::EC2::SecurityGroup",
+      "LogicalResourceId":"ELBSecurityGroup"
+  },
+  {
+      "ResourceType":"AWS::EC2::SecurityGroup",
+      "LogicalResourceId":"InstanceSecurityGroup"
+  }
+]
