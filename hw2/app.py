@@ -63,10 +63,10 @@ def put():
         key = request.args.get('str_key')
         data = request.args.get('data')
         expiration_date = request.args.get('expiration_date')
-        # number_of_nodes = len(nodes_hash.get_nodes())
+        number_of_nodes = len(nodes_hash.get_nodes())
         update_live_nodes()
-        # if number_of_nodes < len(nodes_hash.get_nodes()):
-        #     initiate_redistribution()
+        if number_of_nodes < len(nodes_hash.get_nodes()):
+            initiate_redistribution()
 
         node_ip = nodes_hash.get_node(key)
         second_node_ip = get_second_node_ip(key)
@@ -134,10 +134,10 @@ def set_val():
 def get():
     try:
         key = request.args.get('str_key')
-        # number_of_nodes = len(nodes_hash.get_nodes())
+        number_of_nodes = len(nodes_hash.get_nodes())
         update_live_nodes()
-        # if number_of_nodes < len(nodes_hash.get_nodes()):
-        #     initiate_redistribution()
+        if number_of_nodes < len(nodes_hash.get_nodes()):
+            initiate_redistribution()
         node_ip = nodes_hash.get_node(key)
         alt_node = get_second_node_ip(key)
 
@@ -238,32 +238,36 @@ def redistribute_data():
         alt_node = get_second_node_ip(key)
         data = secondary_cache[key][0]
         expiration_date = secondary_cache[key][1]
-        # if alt_node == ip_address:
-        #     continue
-        # else:
-        try:
-            if alt_node != '-1':
-                ans = requests.post(
-                    f'http://{alt_node}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}&cache=secondary')
-            secondary_cache.pop(key)
-        except Exception as e:
-            return json.dumps({'status code': 404,
-                               'item': str(e)})
+        if alt_node == ip_address:
+            continue
+        else:
+            try:
+                if alt_node != '-1':
+                    ans['status code'] = 404
+                    while ans['status code'] != 200:
+                        ans = requests.post(
+                            f'http://{alt_node}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}&cache=secondary')
+                secondary_cache.pop(key)
+            except Exception as e:
+                return json.dumps({'status code': 404,
+                                   'item': str(e)})
     for key in primary_cache:
         node = nodes_hash.get_node(key)
         data = primary_cache[key][0]
         expiration_date = primary_cache[key][1]
-        # if node == ip_address:
-        #     continue
-        # else:
-        try:
-            if node != '-1':
-                ans = requests.post(
-                    f'http://{node}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}&cache=primary')
-            primary_cache.pop(key)
-        except Exception as e:
-            return json.dumps({'status code': 404,
-                               'item': str(e)})
+        if node == ip_address:
+            continue
+        else:
+            try:
+                if node != '-1':
+                    ans['status code'] = 404
+                    while ans['status code'] != 200:
+                        ans = requests.post(
+                            f'http://{node}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}&cache=primary')
+                primary_cache.pop(key)
+            except Exception as e:
+                return json.dumps({'status code': 404,
+                                   'item': str(e)})
     return json.dumps({'status code': 200})
 
 
@@ -381,8 +385,8 @@ def update_live_nodes():
     for node_key in remove_list:
         nodes_hash.remove_node(node_key)
 
-    if len(nodes_hash.get_nodes()) != nodes_number:
-        initiate_redistribution()
+    # if len(nodes_hash.get_nodes()) != nodes_number:
+    #     initiate_redistribution()
 
 
 def update_hash_nodes(live_nodes_list):
