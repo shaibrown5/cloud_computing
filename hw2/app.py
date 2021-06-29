@@ -9,7 +9,8 @@ dynamodb = boto3.resource('dynamodb', region_name="us-east-2")
 table = dynamodb.Table('aliveNodes')
 delay_period = 30 * 1000
 last = 0
-ip_address = ""
+ip_address = requests.get('https://api.ipify.org').text
+print(ip_address)
 
 # elb = boto3.client('elbv2', region_name='us-east-2')
 # ec2 = boto3.client('ec2', region_name='us-east-2')
