@@ -218,6 +218,7 @@ def initiate_redistribution():
         except Exception as e:
             return json.dumps({'status code': 404,
                                'item': str(e)})
+    return json.dumps({'status code': 200)
 
 
 @app.route('/redistribute_data', methods=['GET', 'POST'])
@@ -252,6 +253,7 @@ def redistribute_data():
             except Exception as e:
                 return json.dumps({'status code': 404,
                                    'item': str(e)})
+    return json.dumps({'status code': 200})
 
 
 @app.route('/test-data', methods=['GET', 'POST'])
