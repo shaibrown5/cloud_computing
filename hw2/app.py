@@ -62,10 +62,10 @@ def put():
         key = request.args.get('str_key')
         data = request.args.get('data')
         expiration_date = request.args.get('expiration_date')
-        number_of_nodes = len(nodes_hash.get_nodes())
+        # number_of_nodes = len(nodes_hash.get_nodes())
         update_live_nodes()
-        if number_of_nodes < len(nodes_hash.get_nodes()):
-            initiate_redistribution()
+        # if number_of_nodes < len(nodes_hash.get_nodes()):
+        #     initiate_redistribution()
 
         node_ip = nodes_hash.get_node(key)
         second_node_ip = get_second_node_ip(key)
@@ -133,10 +133,10 @@ def set_val():
 def get():
     try:
         key = request.args.get('str_key')
-        number_of_nodes = len(nodes_hash.get_nodes())
+        # number_of_nodes = len(nodes_hash.get_nodes())
         update_live_nodes()
-        if number_of_nodes < len(nodes_hash.get_nodes()):
-            initiate_redistribution()
+        # if number_of_nodes < len(nodes_hash.get_nodes()):
+        #     initiate_redistribution()
         node_ip = nodes_hash.get_node(key)
         alt_node = get_second_node_ip(key)
 
@@ -367,6 +367,7 @@ def update_live_nodes():
     by deleteing nodes that are no longer alive, and added new nodes.
     :return:
     """
+    nodes_number = len(nodes_hash.get_nodes())
     live_nodes_list = get_live_node_list()
     remove_list = []
 
@@ -378,6 +379,9 @@ def update_live_nodes():
 
     for node_key in remove_list:
         nodes_hash.remove_node(node_key)
+
+    if len(nodes_hash.get_nodes()) != nodes_number:
+        initiate_redistribution()
 
 
 def update_hash_nodes(live_nodes_list):
