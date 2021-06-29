@@ -238,32 +238,32 @@ def redistribute_data():
         alt_node = get_second_node_ip(key)
         data = secondary_cache[key][0]
         expiration_date = secondary_cache[key][1]
-        if alt_node == ip_address:
-            continue
-        else:
-            try:
-                if alt_node != '-1':
-                    ans = requests.post(
-                        f'http://{alt_node}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}&cache=secondary')
-                secondary_cache.pop(key)
-            except Exception as e:
-                return json.dumps({'status code': 404,
-                                   'item': str(e)})
+        # if alt_node == ip_address:
+        #     continue
+        # else:
+        try:
+            if alt_node != '-1':
+                ans = requests.post(
+                    f'http://{alt_node}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}&cache=secondary')
+            secondary_cache.pop(key)
+        except Exception as e:
+            return json.dumps({'status code': 404,
+                               'item': str(e)})
     for key in primary_cache:
         node = nodes_hash.get_node(key)
         data = primary_cache[key][0]
         expiration_date = primary_cache[key][1]
-        if node == ip_address:
-            continue
-        else:
-            try:
-                if node != '-1':
-                    ans = requests.post(
-                        f'http://{node}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}&cache=primary')
-                primary_cache.pop(key)
-            except Exception as e:
-                return json.dumps({'status code': 404,
-                                   'item': str(e)})
+        # if node == ip_address:
+        #     continue
+        # else:
+        try:
+            if node != '-1':
+                ans = requests.post(
+                    f'http://{node}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}&cache=primary')
+            primary_cache.pop(key)
+        except Exception as e:
+            return json.dumps({'status code': 404,
+                               'item': str(e)})
     return json.dumps({'status code': 200})
 
 
