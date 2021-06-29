@@ -89,6 +89,9 @@ def put():
 
 @app.route('/set_val', methods=['GET', 'POST'])
 def set_val():
+    update_live_nodes()
+    if request.remote_addr not in nodes_hash:
+        return json.dumps({'status code': 404})
     try:
         try:
             key = request.args.get('str_key')
@@ -154,6 +157,10 @@ def get():
 
 @app.route('/get_val', methods=['GET', 'POST'])
 def get_val():
+    update_live_nodes()
+    if request.remote_addr not in nodes_hash:
+        return json.dumps({'status code': 404})
+
     key = request.args.get('str_key')
     first_or_second = request.args.get('cache')
 
@@ -194,7 +201,6 @@ def backup_data():
     #     except Exception as e:
     #         return json.dumps({'status code': 404,
     #                            'item': str(e)})
-
     for key in secondary_cache:
         alt_node = get_second_node_ip(key)
         data = secondary_cache[key][0]
@@ -223,6 +229,10 @@ def initiate_redistribution():
 
 @app.route('/redistribute_data', methods=['GET', 'POST'])
 def redistribute_data():
+    update_live_nodes()
+    if request.remote_addr not in nodes_hash:
+        return json.dumps({'status code': 404})
+
     for key in secondary_cache:
         alt_node = get_second_node_ip(key)
         data = secondary_cache[key][0]
@@ -402,8 +412,14 @@ def get_second_node_ip(key):
     return second_node
 
 
-if __name__ == '__main__':
+def check_address(request):
+    if request.remote_addr not in nodes_hash:
+        return json.dumps({'status code': 404})
+    else:
+        return json.dumps({'status code': 200})
 
+
+if __name__ == '__main__':
     ip_address = requests.get('https://api.ipify.org').text
     print('My public IP address is: {}'.format(ip_address))
     app.run(host='0.0.0.0', port=8080)
