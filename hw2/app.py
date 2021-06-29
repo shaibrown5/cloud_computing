@@ -90,7 +90,7 @@ def put():
 @app.route('/set_val', methods=['GET', 'POST'])
 def set_val():
     update_live_nodes()
-    if request.remote_addr not in nodes_hash:
+    if request.remote_addr and request.remote_addr not in nodes_hash.get_nodes():
         return json.dumps({'status code': 404})
     try:
         try:
@@ -158,7 +158,7 @@ def get():
 @app.route('/get_val', methods=['GET', 'POST'])
 def get_val():
     update_live_nodes()
-    if request.remote_addr not in nodes_hash:
+    if request.remote_addr and request.remote_addr not in nodes_hash.get_nodes():
         return json.dumps({'status code': 404})
 
     key = request.args.get('str_key')
@@ -230,7 +230,7 @@ def initiate_redistribution():
 @app.route('/redistribute_data', methods=['GET', 'POST'])
 def redistribute_data():
     update_live_nodes()
-    if request.remote_addr not in nodes_hash:
+    if request.remote_addr and request.remote_addr not in nodes_hash.get_nodes():
         return json.dumps({'status code': 404})
 
     for key in secondary_cache:
@@ -410,13 +410,6 @@ def get_second_node_ip(key):
         return json.dumps({'item': str(e)})
 
     return second_node
-
-
-def check_address(request):
-    if request.remote_addr not in nodes_hash:
-        return json.dumps({'status code': 404})
-    else:
-        return json.dumps({'status code': 200})
 
 
 if __name__ == '__main__':
