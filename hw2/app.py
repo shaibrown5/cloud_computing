@@ -218,7 +218,7 @@ def initiate_redistribution():
         except Exception as e:
             return json.dumps({'status code': 404,
                                'item': str(e)})
-    return json.dumps({'status code': 200)
+    return json.dumps({'status code': 200})
 
 
 @app.route('/redistribute_data', methods=['GET', 'POST'])
