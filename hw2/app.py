@@ -65,7 +65,7 @@ def put():
         expiration_date = request.args.get('expiration_date')
         number_of_nodes = len(nodes_hash.get_nodes())
         update_live_nodes()
-        if number_of_nodes < len(nodes_hash.get_nodes()):
+        if number_of_nodes != len(nodes_hash.get_nodes()):
             initiate_redistribution()
 
         node_ip = nodes_hash.get_node(key)
@@ -136,7 +136,7 @@ def get():
         key = request.args.get('str_key')
         number_of_nodes = len(nodes_hash.get_nodes())
         update_live_nodes()
-        if number_of_nodes < len(nodes_hash.get_nodes()):
+        if number_of_nodes != len(nodes_hash.get_nodes()):
             initiate_redistribution()
         node_ip = nodes_hash.get_node(key)
         alt_node = get_second_node_ip(key)
