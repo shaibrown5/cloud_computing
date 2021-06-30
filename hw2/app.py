@@ -251,7 +251,7 @@ def redistribute_data():
                         ans = requests.post(
                             f'http://{alt_node}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}&cache=secondary')
                 # secondary_cache.pop(key)
-                secondary_keys_to_keep.append(key)
+                # secondary_keys_to_keep.append(key)
             except Exception as e:
                 return json.dumps({'status code': 404,
                                    'item': str(e)})
@@ -274,7 +274,7 @@ def redistribute_data():
                         ans = requests.post(
                             f'http://{node}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}&cache=primary')
                 # primary_cache.pop(key)
-                primary_keys_to_keep.append(key)
+                # primary_keys_to_keep.append(key)
             except Exception as e:
                 return json.dumps({'status code': 404,
                                    'item': str(e)})
