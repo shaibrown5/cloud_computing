@@ -221,6 +221,7 @@ def backup_data():
 
 
 def initiate_redistribution():
+    update_live_nodes()
     for node in nodes_hash:
         try:
             if node != '-1':
@@ -236,8 +237,8 @@ def redistribute_data():
     # while checking_second_node:
     #     pass
     update_live_nodes()
-    if request.remote_addr and request.remote_addr not in nodes_hash.get_nodes():
-        return json.dumps({'status code': 404})
+    # if request.remote_addr and request.remote_addr not in nodes_hash.get_nodes():
+    #     return json.dumps({'status code': 404})
     primary_keys_to_keep = []
     secondary_keys_to_keep = []
     try:
