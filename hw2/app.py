@@ -430,15 +430,15 @@ def get_second_node_ip(key):
     :return:
     """
     try:
-        # checking_second_node = True
-        original_node = nodes_hash.get_node(key)
-        nodes_hash.remove_node(original_node)
-        second_node = nodes_hash.get_node(key)
+        temp = HashRing(nodes=get_live_node_list())
+        original_node = temp.get_node(key)
+        temp.remove_node(original_node)
+        second_node = temp.get_node(key)
 
         if second_node is None:
             second_node = '-1'
 
-        nodes_hash.add_node(original_node)
+        temp.add_node(original_node)
     except Exception as e:
         # checking_second_node = False
         return json.dumps({'item': str(e)})
