@@ -17,6 +17,7 @@ print(ip_address)
 primary_cache = {}
 secondary_cache = {}
 app = Flask(__name__)
+checking_second_node = False
 
 
 def get_millis(dt):
@@ -230,6 +231,8 @@ def initiate_redistribution():
 
 @app.route('/redistribute_data', methods=['GET', 'POST'])
 def redistribute_data():
+    while checking_second_node:
+        pass
     update_live_nodes()
     if request.remote_addr and request.remote_addr not in nodes_hash.get_nodes():
         return json.dumps({'status code': 404})
@@ -420,19 +423,23 @@ def get_second_node_ip(key):
     :return:
     """
     try:
-        temp = nodes_hash
+        checking_second_node = True
         original_node = nodes_hash.get_node(key)
-        temp.remove_node(original_node)
-        second_node = temp.get_node(key)
+        nodes_hash.remove_node(original_node)
+        second_node = nodes_hash.get_node(key)
 
         if second_node is None:
             second_node = '-1'
 
-        temp.add_node(original_node)
+        nodes_hash.add_node(original_node)
     except Exception as e:
+        checking_second_node = False
         return json.dumps({'item': str(e)})
-
+    checking_second_node = False
     return second_node
+
+def copy_hash():
+    nodes_hash = HashRing(nodes=get_live_node_list())
 
 
 if __name__ == '__main__':
