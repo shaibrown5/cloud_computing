@@ -212,7 +212,7 @@ def backup_data():
 
 def initiate_redistribution():
     update_live_nodes()
-    for node in nodes_hash:
+    for node in nodes_hash.get_nodes():
         try:
             if node != '-1':
                 requests.post(f'http://{node}:8080/redistribute_data')
