@@ -92,8 +92,8 @@ def put():
 @app.route('/set_val', methods=['GET', 'POST'])
 def set_val():
     update_live_nodes()
-    if request.remote_addr and request.remote_addr not in nodes_hash.get_nodes():
-        return json.dumps({'status code': 404})
+    # if request.remote_addr and request.remote_addr not in nodes_hash.get_nodes():
+    #     return json.dumps({'status code': 404})
     try:
         try:
             key = request.args.get('str_key')
@@ -162,8 +162,8 @@ def get():
 @app.route('/get_val', methods=['GET', 'POST'])
 def get_val():
     update_live_nodes()
-    if request.remote_addr and request.remote_addr not in nodes_hash.get_nodes():
-        return json.dumps({'status code': 404})
+    # if request.remote_addr and request.remote_addr not in nodes_hash.get_nodes():
+    #     return json.dumps({'status code': 404})
 
     key = request.args.get('str_key')
     first_or_second = request.args.get('cache')
@@ -447,8 +447,6 @@ def get_second_node_ip(key):
     return second_node
 
 
-# def copy_hash():
-#     nodes_hash = HashRing(nodes=get_live_node_list())
 
 
 if __name__ == '__main__':
