@@ -241,6 +241,7 @@ def redistribute_data():
         data = secondary_cache[key][0]
         expiration_date = secondary_cache[key][1]
         if alt_node == ip_address:
+            secondary_keys_to_keep.append(key)
             continue
         else:
             try:
@@ -257,12 +258,13 @@ def redistribute_data():
     for key in secondary_cache:
         if key not in secondary_keys_to_keep:
             secondary_cache.pop(key)
-            
+
     for key in primary_cache:
         node = nodes_hash.get_node(key)
         data = primary_cache[key][0]
         expiration_date = primary_cache[key][1]
         if node == ip_address:
+            primary_keys_to_keep.append(key)
             continue
         else:
             try:
