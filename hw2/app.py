@@ -92,8 +92,8 @@ def put():
 @app.route('/set_val', methods=['GET', 'POST'])
 def set_val():
     update_live_nodes()
-    # if request.remote_addr and request.remote_addr not in nodes_hash.get_nodes():
-    #     return json.dumps({'status code': 404})
+    if request.remote_addr and request.remote_addr not in nodes_hash.get_nodes():
+        return json.dumps({'status code': 404})
     try:
         try:
             key = request.args.get('str_key')
@@ -162,8 +162,8 @@ def get():
 @app.route('/get_val', methods=['GET', 'POST'])
 def get_val():
     update_live_nodes()
-    # if request.remote_addr and request.remote_addr not in nodes_hash.get_nodes():
-    #     return json.dumps({'status code': 404})
+    if request.remote_addr and request.remote_addr not in nodes_hash.get_nodes():
+        return json.dumps({'status code': 404})
 
     key = request.args.get('str_key')
     first_or_second = request.args.get('cache')
@@ -197,7 +197,11 @@ def backup_data():
         alt_node = get_second_node_ip(key)
         data = secondary_cache[key][0]
         expiration_date = secondary_cache[key][1]
+        keys_to_keep=[]
         try:
+            if alt_node == ip_address:
+                keys_to_keep.append(key)
+                continue
             if alt_node != '-1':
                 ans = requests.post(
                     f'http://{alt_node}:8080/set_val?str_key={key}&data={data}&expiration_date={expiration_date}&cache=secondary')
@@ -206,7 +210,9 @@ def backup_data():
         except Exception as e:
             return json.dumps({'status code': 404,
                                'item': str(e)})
-    secondary_cache.clear()
+    for key in secondary_cache:
+        if key not in keys_to_keep:
+            secondary_cache.pop(key)
     return json.dumps({'status code': 200})
 
 
@@ -227,8 +233,8 @@ def redistribute_data():
     # while checking_second_node:
     #     pass
     update_live_nodes()
-    # if request.remote_addr and request.remote_addr not in nodes_hash.get_nodes():
-    #     return json.dumps({'status code': 404})
+    if request.remote_addr and request.remote_addr not in nodes_hash.get_nodes():
+        return json.dumps({'status code': 404})
     primary_keys_to_keep = []
     secondary_keys_to_keep = []
     try:
@@ -421,15 +427,15 @@ def get_second_node_ip(key):
     :return:
     """
     try:
-        temp = HashRing(nodes=get_live_node_list())
-        original_node = temp.get_node(key)
-        temp.remove_node(original_node)
-        second_node = temp.get_node(key)
+        # temp = HashRing(nodes=get_live_node_list())
+        original_node = nodes_hash.get_node(key)
+        nodes_hash.remove_node(original_node)
+        second_node = nodes_hash.get_node(key)
 
         if second_node is None:
             second_node = '-1'
 
-        temp.add_node(original_node)
+        nodes_hash.add_node(original_node)
     except Exception as e:
         # checking_second_node = False
         return json.dumps({'item': str(e)})
