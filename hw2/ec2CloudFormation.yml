@@ -170,7 +170,7 @@ Resources:
             sudo apt-get install redis-server -y
             sudo service redis-server start
             pip3 install redis
-            git clone -b _feature/add_node_support https://github.com/shaibrown5/cloud_computing.git
+            git clone https://github.com/shaibrown5/cloud_computing.git
             cd cloud_computing
             pip3 install -r requirements.txt
             cd hw2
@@ -199,7 +199,7 @@ Resources:
             sudo apt-get install redis-server -y
             sudo service redis-server start
             pip3 install redis
-            git clone -b _feature/add_node_support https://github.com/shaibrown5/cloud_computing.git
+            git clone https://github.com/shaibrown5/cloud_computing.git
             cd cloud_computing
             pip3 install -r requirements.txt
             cd hw2
@@ -228,7 +228,7 @@ Resources:
             sudo apt-get install redis-server -y
             sudo service redis-server start
             pip3 install redis
-            git clone -b _feature/add_node_support https://github.com/shaibrown5/cloud_computing.git
+            git clone https://github.com/shaibrown5/cloud_computing.git
             cd cloud_computing
             pip3 install -r requirements.txt
             cd hw2
